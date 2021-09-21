@@ -1,6 +1,6 @@
 
 ---
-# DATA TYPES
+## DATA TYPES
 ---
 
 #### PImage
@@ -16,7 +16,7 @@
 > puntatore a bytes contenenti i dati di un suono
 
 ---
-# CORE
+## CORE
 ---
 
 #### void PixieDebug()
@@ -57,7 +57,7 @@
 > Abilita/disabilita il Vsync (default off)
 
 ---
-# RENDER
+## RENDER
 ---
 
 #### void PixieRenderClear(int col)
@@ -89,7 +89,7 @@
 >  Restituisce l'altezza in pixels della superfcie disegnabile
 
 ---
-# COLOR AND PALETTE
+## COLOR AND PALETTE
 ---
 
 #### void PixieColorSet(int col)
@@ -99,7 +99,7 @@
 #### void PixiePaletteSet(int pal)
 
 ---
-# DRAWING
+## DRAWING
 ---
 
 #### void PixieDrawPoint(int x, int y)
@@ -163,7 +163,7 @@
 #### void PixieDrawString(char *s, int x, int y)
 
 ---
-# IMAGES
+## IMAGES
 ---
 
 #### void PixieImageLoad(char *file, PImage *buffer, int *w, int *h)
@@ -177,7 +177,7 @@
 #### int PixieImageOverlap(PImage a, int ax, int ay, int aw, int ah, PImage b, int bx, int by, int bw, int bh, int col)
 
 ---
-# FONTS
+## FONTS
 ---
 
 #### void PixieFontLoad(char *file, PFont *buffer, int *size)
@@ -203,7 +203,7 @@
 #### void PixieFontGetStringSize(char *s, int *w, int *h)
 
 ---
-# AUDIO
+## AUDIO
 ---
 
 #### void PixieAudioLoadSound(char *file,  PSound *buffer, int *size, int *format, int *rate)
@@ -233,7 +233,7 @@
 #### void PixieAudioSetVolume(float vol)
 
 ---
-# TIME
+## TIME
 ---
 
 #### int PixieTimeGet()
@@ -243,7 +243,7 @@
 #### float PixieTimeGetDelta()
 
 ---
-# EVENTS
+## EVENTS
 ---
 
 #### int PixieEventAvailable()
@@ -282,84 +282,84 @@
 
 #### COLORS
 
-> P_NUM_COLORS
-> P_COLOR_0
-> P_COLOR_1
-> P_COLOR_2
-> P_COLOR_3
+> P_NUM_COLORS  
+> P_COLOR_0  
+> P_COLOR_1  
+> P_COLOR_2  
+> P_COLOR_3  
 
 #### PALETTES
 
->P_NUM_PALETTES
->P_PALETTE_MONO
->P_PALETTE_0_L
->P_PALETTE_0_H
->P_PALETTE_1_L
->P_PALETTE_1_H
->P_PALETTE_2_L
->P_PALETTE_2_H
+>P_NUM_PALETTES  
+>P_PALETTE_MONO  
+>P_PALETTE_0_L  
+>P_PALETTE_0_H  
+>P_PALETTE_1_L  
+>P_PALETTE_1_H  
+>P_PALETTE_2_L  
+>P_PALETTE_2_H  
 
 #### CHARSET
 
-> P_CHARSET_BLANK
-> P_CHARSET_BLOCK
+> P_CHARSET_BLANK  
+> P_CHARSET_BLOCK  
 
 #### TONES
 
-> P_NUM_TONES
-> P_DO
-> P_RE
-> P_MI
-> P_FA
-> P_SO
-> P_LA
-> P_SI
+> P_NUM_TONES  
+> P_DO  
+> P_RE  
+> P_MI  
+> P_FA  
+> P_SO  
+> P_LA  
+> P_SI  
 
 #### EVENTS
 
-> P_NONE
-> P_QUIT
-> P_KEYPRESS
-> P_KEYRELEASE
-> P_MOUSEMOVE
-> P_MOUSEPRESS
-> P_MOUSERELEASE
-> P_MOUSEWHEEL
+> P_NONE  
+> P_QUIT  
+> P_KEYPRESS  
+> P_KEYRELEASE  
+> P_MOUSEMOVE  
+> P_MOUSEPRESS  
+> P_MOUSERELEASE  
+> P_MOUSEWHEEL  
 
 #### MOUSE BUTTONS
 
-> P_BUT_LEFT
-> P_BUT_MID
-> P_BUT_RIGHT
+> P_BUT_LEFT  
+> P_BUT_MID  
+> P_BUT_RIGHT  
 
 #### MOUSE WHEEL
 
-> P_WHEEL_UP
-> P_WHEEL_DOWN
+> P_WHEEL_UP  
+> P_WHEEL_DOWN  
 
 #### COMMON KEYS
 
-> P_ESC
-> P_ENTER
-> P_CANCEL
-> P_BACKSPACE
-> P_SPACE
+> P_ESC  
+> P_ENTER  
+> P_CANCEL  
+> P_BACKSPACE  
+> P_SPACE  
 
 #### NUMPAD KEYS
 
-> P_PLUS
-> P_MINUS
+> P_PLUS  
+> P_MINUS  
 
 #### ARROW KEYS
 
-> P_UP
-> P_DOWN
-> P_LEFT
-> P_RIGHT
+> P_UP  
+> P_DOWN  
+> P_LEFT  
+> P_RIGHT  
 
 #### FUNCTION KEYS
 
-> P_F1
-> P_F2
-> P_F3
-> P_F4
+> P_F1  
+> P_F2  
+> P_F3  
+> P_F4  
