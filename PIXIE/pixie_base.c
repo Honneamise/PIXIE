@@ -39,6 +39,8 @@ static int32_t PEndianness()
 /********/
 void PSwap(int32_t *a, int32_t *b)
 {
+	assert(a!=NULL && b!=NULL);
+
     int32_t t = *a;
     *a = *b;
     *b = t;
@@ -47,6 +49,8 @@ void PSwap(int32_t *a, int32_t *b)
 /**********/
 void PSwapf(float *a, float *b)
 {
+	assert(a!=NULL && b!=NULL);
+
     float t = *a;
     *a = *b;
     *b = t;
@@ -136,6 +140,8 @@ float PDegreesf(float radians)
 /**********/
 void *PAlloc(size_t count, size_t size)
 {
+	assert(count>0 && size>0);
+
 	void *p = calloc(count, size);
 
 	if (p == NULL) { assert(p!=NULL); };
@@ -146,6 +152,8 @@ void *PAlloc(size_t count, size_t size)
 /**********/
 void *PRealloc(void* ptr, size_t size)
 {
+	assert(ptr!=NULL && size>0);
+
 	void* p = realloc(ptr, size);
 
 	if (p == NULL) { assert(p!=NULL); };
@@ -236,7 +244,7 @@ void *PArrayGet(PArray *array, int32_t index)
 }
 
 /**********/
-void PArrayPerform(PArray *array, Performer func )
+void PArrayPerform(PArray *array, Performer func)
 {
 	assert(array!=NULL);
 
@@ -354,7 +362,7 @@ void *PQueuePeek(PQueue *queue)
 /***********/
 /* BUFFERS */
 /***********/
-void PBufferLoad(int8_t *file, uint8_t **buffer, int32_t *size)
+void PBufferLoad(char *file, uint8_t **buffer, int32_t *size)
 {
 	assert(file!=NULL);
 

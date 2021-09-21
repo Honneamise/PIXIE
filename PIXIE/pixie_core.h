@@ -1,19 +1,20 @@
 #ifndef PIXIE_CORE_H
 #define PIXIE_CORE_H
+#include "stdint.h"
 
 /**************/
 /* DATA TYPES */
 /**************/
-typedef unsigned char *PImage;
-typedef unsigned char *PFont;
-typedef unsigned char *PSound;
+typedef uint8_t *PImage;
+typedef uint8_t *PFont;
+typedef uint8_t *PSound;
 
 /********/
 /* CORE */
 /********/
 void PixieDebug();
 
-void PixieInit(int w, int h, int screen);
+void PixieInit(int32_t w, int32_t h, int32_t screen);
 
 void PixieClose();
 
@@ -24,88 +25,90 @@ void PixieToggleVsync();
 /**********/
 /* RENDER */
 /**********/
-void PixieRenderClear(int col);
+void PixieRenderClear(int32_t col);
 
 void PixieRenderDraw();
 
-int PixieRenderGetWidth();
+int32_t PixieRenderGetWidth();
 
-int PixieRenderGetHeight();
+int32_t PixieRenderGetHeight();
+
+void PixieRenderScreenshot(char *file);
 
 /*********************/
 /* COLOR AND PALETTE */
 /*********************/
-void PixieColorSet(int col);
+void PixieColorSet(int32_t col);
 
-void PixiePaletteSet(int pal);
+void PixiePaletteSet(int32_t pal);
 
 /***********/
 /* DRAWING */
 /***********/
-void PixieDrawPoint(int x, int y);
+void PixieDrawPoint(int32_t x, int32_t y);
 
-void PixieDrawLine(int x0, int y0, int x1, int y1);
+void PixieDrawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
 
-void PixieDrawTri(int ax, int ay, int bx, int by, int cx, int cy);
+void PixieDrawTri(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy);
 
-void PixieDrawTriFill(int ax, int ay, int bx, int by, int cx, int cy);
+void PixieDrawTriFill(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy);
 
-void PixieDrawRect(int x, int y, int w, int h);
+void PixieDrawRect(int32_t x, int32_t y, int32_t w, int32_t h);
 
-void PixieDrawRectFill(int x, int y, int w, int h);
+void PixieDrawRectFill(int32_t x, int32_t y, int32_t w, int32_t h);
 
-void PixieDrawCircle(int x, int y, int r);
+void PixieDrawCircle(int32_t x, int32_t y, int32_t r);
 
-void PixieDrawCircleFill(int x, int y, int r);
+void PixieDrawCircleFill(int32_t x, int32_t y, int32_t r);
 
-void PixieDrawImage(PImage buffer, int w, int h, int x, int y);
+void PixieDrawImage(PImage buffer, int32_t w, int32_t h, int32_t x, int32_t y);
 
-void PixieDrawImagePart(PImage buffer, int bw, int bh, int sx, int sy, int sw, int sh, int x, int y);
+void PixieDrawImagePart(PImage buffer, int32_t bw, int32_t bh, int32_t sx, int32_t sy, int32_t sw, int32_t sh, int32_t x, int32_t y);
 
-void PixieDrawImageMask(PImage buffer, int bw, int bh, PImage mask, int mw, int mh, int x, int y, int col);
+void PixieDrawImageMask(PImage buffer, int32_t bw, int32_t bh, PImage mask, int32_t mw, int32_t mh, int32_t x, int32_t y, int32_t col);
 
-void PixieDrawImagePartMask(PImage buffer, int bw, int bh, PImage mask, int mw, int mh, int sx, int sy, int sw, int sh, int x, int y, int col);
+void PixieDrawImagePartMask(PImage buffer, int32_t bw, int32_t bh, PImage mask, int32_t mw, int32_t mh, int32_t sx, int32_t sy, int32_t sw, int32_t sh, int32_t x, int32_t y, int32_t col);
 
-void PixieDrawChar(char c, int x, int y);
+void PixieDrawChar(char c, int32_t x, int32_t y);
 
-void PixieDrawString(char *s, int x, int y);
+void PixieDrawString(char *s, int32_t x, int32_t y);
 
 /**********/
 /* IMAGES */
 /**********/
-void PixieImageLoad(char *file, PImage *buffer, int *w, int *h);
+void PixieImageLoad(char *file, PImage *buffer, int32_t *w, int32_t *h);
 
-int PixieImageIntersect(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh, int *rx, int *ry, int *rw, int *rh);
+int32_t PixieImageIntersect(int32_t ax, int32_t ay, int32_t aw, int32_t ah, int32_t bx, int32_t by, int32_t bw, int32_t bh, int32_t *rx, int32_t *ry, int32_t *rw, int32_t *rh);
 
-int PixieImageOverlap(PImage a, int ax, int ay, int aw, int ah, PImage b, int bx, int by, int bw, int bh, int col);
+int32_t PixieImageOverlap(PImage a, int32_t ax, int32_t ay, int32_t aw, int32_t ah, PImage b, int32_t bx, int32_t by, int32_t bw, int32_t bh, int32_t col);
 
 /*********/
 /* FONTS */
 /*********/
-void PixieFontLoad(char *file, PFont *buffer, int *size);
+void PixieFontLoad(char *file, PFont *buffer, int32_t *size);
 
-void PixieFontSet( PFont buffer, int size);
+void PixieFontSet(PFont buffer, int32_t size);
 
-void PixieFontSetScale(int scale);
+void PixieFontSetScale(int32_t scale);
 
-int PixieFontGetWidth();
+int32_t PixieFontGetWidth();
 
-int PixieFontGetHeight();
+int32_t PixieFontGetHeight();
 
-void PixieFontGetStringSize(char *s, int *w, int *h);
+void PixieFontGetStringSize(char *s, int32_t *w, int32_t *h);
 
 /*********/
 /* AUDIO */
 /*********/
-void PixieAudioLoadSound(char *file, PSound *buffer, int *size, int *format, int *rate);
+void PixieAudioLoadSound(char *file, PSound *buffer, int32_t *size, int32_t *format, int32_t *rate);
 
-void PixieAudioPlaySound(PSound buffer, int size, int format, int rate);
+void PixieAudioPlaySound(PSound buffer, int32_t size, int32_t format, int32_t rate);
 
-void PixieAudioLoopSound(PSound buffer, int size, int format, int rate);
+void PixieAudioLoopSound(PSound buffer, int32_t size, int32_t format, int32_t rate);
 
 void PixieAudioStopSound();
 
-void PixieAudioPlayTone(int tone);
+void PixieAudioPlayTone(int32_t tone);
 
 void PixieAudioStopTone();
 
@@ -114,28 +117,28 @@ void PixieAudioSetVolume(float vol);
 /********/
 /* TIME */
 /********/
-int PixieTimeGet();
+int32_t PixieTimeGet();
 
 float PixieTimeGetDelta();
 
 /**********/
 /* EVENTS */
 /**********/
-int PixieEventAvailable();
+int32_t PixieEventAvailable();
 
-int PixieEventGetType();
+int32_t PixieEventGetType();
 
-int PixieEventGetKey();
+int32_t PixieEventGetKey();
 
-int PixieEventGetAsciiKey();
+int32_t PixieEventGetAsciiKey();
 
-int PixieEventGetMouseX();
+int32_t PixieEventGetMouseX();
 
-int PixieEventGetMouseY();
+int32_t PixieEventGetMouseY();
 
-int PixieEventGetMouseButton();
+int32_t PixieEventGetMouseButton();
 
-int PixieEventGetWheelDir();
+int32_t PixieEventGetWheelDir();
 
 /***********/
 /* DEFINES */

@@ -122,6 +122,7 @@ typedef struct Pixie
     ALuint atones[P_NUM_TONES];
 
     uint8_t color;
+    int32_t palette_index;
 
     int32_t font_w;
     int32_t font_h;
@@ -410,7 +411,7 @@ static PFNWGLGETSWAPINTERVALEXTPROC wglGetSwapIntervalEXT = NULL;
 /************/
 /* LOG UTIL */
 /************/
-static void PixieError(uint8_t *str, ...)
+static void PixieError(char *str, ...)
 {
     #if defined(_MSC_VER) && defined(_DEBUG)
         int32_t flag = 0;
@@ -893,7 +894,7 @@ static void PixieOpenglCreateContext()
 
 /**********/
 #if defined(_MSC_VER) && defined(_DEBUG)
-static uint8_t *PixieOpenglDebugSource(GLenum source)
+static int8_t *PixieOpenglDebugSource(GLenum source)
 {
     switch (source)
 	{
@@ -911,7 +912,7 @@ static uint8_t *PixieOpenglDebugSource(GLenum source)
 
 /*********/
 #if defined(_MSC_VER) && defined(_DEBUG)
-static uint8_t *PixieOpenglDebugType(GLenum type)
+static int8_t *PixieOpenglDebugType(GLenum type)
 {
 	switch (type)
 	{
@@ -932,7 +933,7 @@ static uint8_t *PixieOpenglDebugType(GLenum type)
 
 /**********/
 #if defined(_MSC_VER) && defined(_DEBUG)
-static uint8_t *PixieOpenglDebugSeverity(GLenum severity)
+static int8_t *PixieOpenglDebugSeverity(GLenum severity)
 {
 	switch (severity)
 	{
@@ -988,7 +989,7 @@ static GLuint PixieOpenglShader(GLenum type, uint8_t *src)
 
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
 
-		uint8_t* msg = PAlloc(len, sizeof(uint8_t));
+		char *msg = PAlloc(len, sizeof(char));
 
 		glGetShaderInfoLog(shader, len, &len, msg);
 
@@ -1019,7 +1020,7 @@ static GLuint PixieOpenglProgramShader(GLuint vert_shader, GLuint frag_shader)
 
 		glGetProgramiv(prog_shader, GL_INFO_LOG_LENGTH, &len);
 
-		uint8_t* msg = PAlloc(len, sizeof(uint8_t));
+		char *msg = PAlloc(len, sizeof(char));
 
 		glGetProgramInfoLog(prog_shader, len, &len, msg);
 
@@ -1117,7 +1118,7 @@ static void PixieOpenglSwapbuffers()
 /****************/
 /* OPENAL UTILS */
 /****************/
-static uint8_t *PixieOpenalError(int32_t err)
+static char *PixieOpenalError(int32_t err)
 {
     switch(err) 
     {
@@ -1155,7 +1156,7 @@ static void PixieOpenalGenerateTone(uint8_t *buf, int32_t sample_rate, float fre
 /**********/
 static void PixieOpenalInit()
 {
-    uint8_t *name = (uint8_t *)alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+    char *name = (char *)alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
     
     pixie->adev = alcOpenDevice(name);
 
@@ -1424,6 +1425,7 @@ void PixieInit(int32_t w, int32_t h, int32_t screen)
     pixie->buffer = PAlloc(w*h, sizeof(uint8_t));
 
     pixie->color = P_COLOR_3;
+    pixie->palette_index = P_PALETTE_MONO;
 
 	pixie->font_w = P_FONT_W;
 	pixie->font_h = P_FONT_H;
@@ -1574,6 +1576,46 @@ int32_t PixieRenderGetHeight()
 	return pixie->height;
 }
 
+/**********/
+void PixieRenderScreenshot(char *file)
+{
+    assert(file!=NULL);
+
+    FILE *fp = fopen(file,"wb");
+
+    if(fp)
+    {
+        //header
+        char header[64] = {0};
+        sprintf(header,"P6\n#PIXIE\n%d\n%d\n255\n",pixie->width,pixie->height);
+        size_t len = strlen(header);
+        if(fwrite(header,sizeof(uint8_t)*len,1,fp) != 1 ) { fclose(fp); PixieError("[%s]: failed to write header", __func__); }
+
+        //data
+        uint8_t *data = PAlloc(pixie->width * pixie->height * 3, sizeof(uint8_t));
+
+        for(int32_t i=0,count=0;i<pixie->width * pixie->height;i++,count+=3)
+        {
+            int32_t index = pixie->palette_index + pixie->buffer[i]*3;
+
+            data[count] = (uint8_t)P_PALETTES[index];
+            data[count+1] = (uint8_t)P_PALETTES[index+1];
+            data[count+2] = (uint8_t)P_PALETTES[index+2];
+        }
+
+        if(fwrite(data, sizeof(uint8_t) * pixie->width * pixie->height * 3, 1, fp)!= 1 ) { fclose(fp); PixieError("[%s]: failed to write data", __func__); }
+
+        PFree(data);
+
+        fclose(fp);
+    }
+    else
+    {
+       PixieError("[%s]: failed to open file", __func__);
+    }
+
+}
+
 /*********************/
 /* COLOR AND PALETTE */
 /*********************/
@@ -1589,13 +1631,13 @@ void PixiePaletteSet(int32_t pal)
 {
     assert(pixie!=NULL);
 
-	int32_t index = (pal % P_NUMPALETTES)*P_PALETTE_SIZE;
+	pixie->palette_index = (pal % P_NUMPALETTES)*P_PALETTE_SIZE;
 
     float v[P_PALETTE_SIZE]={0};
 	
 	for(int32_t i=0;i<P_PALETTE_SIZE;i++)
 	{
-		v[i] = (float)P_PALETTES[index+i] / 255.0f;
+		v[i] = (float)P_PALETTES[pixie->palette_index+i] / 255.0f;
     }
 
 	int32_t loc = glGetUniformLocation(pixie->prog_shader, P_PALETTE_LOCATION);
@@ -1942,8 +1984,7 @@ void PixieDrawImageMask(uint8_t *buffer, int32_t bw, int32_t bh, uint8_t *mask, 
     assert(pixie!=NULL);
     assert(buffer!=NULL);
     assert(mask!=NULL);
-
-	if(bw!=mw || bh!=mh){ PixieError("[%s]: sizes mismatch\n", __func__); };
+    assert(bw==mw && bh==mh);
 	
 	int32_t rx = 0;
     int32_t ry = 0;
@@ -1984,8 +2025,7 @@ void PixieDrawImagePartMask(uint8_t *buffer, int32_t bw, int32_t bh, uint8_t *ma
     assert(pixie!=NULL);
     assert(buffer!=NULL);
     assert(mask!=NULL);
-
-    if(bw!=mw || bh!=mh){ PixieError("[%s]: sizes mismatch\n", __func__); };
+    assert(bw==mw && bh==mh);
 
     int32_t check = 0;
 
@@ -2049,7 +2089,7 @@ void PixieDrawImagePartMask(uint8_t *buffer, int32_t bw, int32_t bh, uint8_t *ma
 }
 
 /**********/
-void PixieDrawChar(int8_t c, int32_t x, int32_t y)
+void PixieDrawChar(char c, int32_t x, int32_t y)
 {
     assert(pixie!=NULL);
 
@@ -2112,7 +2152,7 @@ void PixieDrawChar(int8_t c, int32_t x, int32_t y)
 }
 
 /**********/
-void PixieDrawString(int8_t *s, int32_t x, int32_t y)
+void PixieDrawString(char *s, int32_t x, int32_t y)
 {
     assert(pixie!=NULL);
     assert(s!=NULL);
@@ -2134,7 +2174,7 @@ void PixieDrawString(int8_t *s, int32_t x, int32_t y)
 /**********/
 /* IMAGES */
 /**********/
-void PixieImageLoad(int8_t *file, uint8_t **buffer, int32_t *w, int32_t *h)
+void PixieImageLoad(char *file, uint8_t **buffer, int32_t *w, int32_t *h)
 {
     assert(file!=NULL);
 
@@ -2273,7 +2313,7 @@ int32_t PixieImageOverlap(uint8_t *a, int32_t ax, int32_t ay, int32_t aw, int32_
 /*********/
 /* FONTS */
 /*********/
-void PixieFontLoad(int8_t *file, PFont *buffer, int32_t *size)
+void PixieFontLoad(char *file, PFont *buffer, int32_t *size)
 {
     assert(file!=NULL);
 
@@ -2325,7 +2365,7 @@ int32_t PixieFontGetHeight()
 }
 
 /**********/
-void PixieFontGetStringSize(int8_t *s, int32_t *w, int32_t *h)
+void PixieFontGetStringSize(char *s, int32_t *w, int32_t *h)
 {
     assert(pixie!=NULL);
     assert(s!=NULL);
@@ -2351,7 +2391,7 @@ void PixieFontGetStringSize(int8_t *s, int32_t *w, int32_t *h)
 /*********/
 /* AUDIO */
 /*********/
-void PixieAudioLoadSound(int8_t *file, PSound *buffer, int32_t *size, int32_t *format, int32_t *rate)
+void PixieAudioLoadSound(char *file, PSound *buffer, int32_t *size, int32_t *format, int32_t *rate)
 {
     assert(pixie!=NULL);
 

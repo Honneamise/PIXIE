@@ -84,6 +84,14 @@
 >
 >  Restituisce l'altezza in pixels della superfcie disegnabile
 
+<br>
+
+#### void PixieRenderScreenshot(char *file)
+
+> **file** : nome del file
+>
+>  Salva la schermata corrente in un file in formato ***PPM***
+
 ---
 # COLOR AND PALETTE
 

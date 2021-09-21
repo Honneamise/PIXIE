@@ -1,5 +1,6 @@
 #ifndef PIXIE_EXTS_H
 #define PIXIE_EXTS_H
+#include "stdint.h"
 
 /**********/
 /* PVEC2F */

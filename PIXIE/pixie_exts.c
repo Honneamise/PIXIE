@@ -4,6 +4,7 @@
 //std
 #include "stdlib.h"
 #include "stdint.h"
+#include "assert.h"
 
 //math
 #include "math.h"
@@ -140,6 +141,8 @@ PVec3f PVec3fCross(PVec3f v, PVec3f s)
 /**********/
 void PVec3fxPMat4f(PVec3f v, float *m, PVec3f *rv)
 {
+	assert(m!=NULL && rv!=NULL);
+
 	float vector[4] = { v.x, v.y, v.z, 1.0f };
 
 	float rvector[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -159,6 +162,8 @@ void PVec3fxPMat4f(PVec3f v, float *m, PVec3f *rv)
 /**********/
 void PMat4fInit(PMat4f m)
 {
+	assert(m!=NULL);
+
 	for(int32_t i=0;i<16;i++){ m[i] = 0.0f; }
 
 	m[0] = 1.0f;
@@ -170,6 +175,8 @@ void PMat4fInit(PMat4f m)
 /**********/
 void PMat4fScale(PMat4f m, float scale, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	PMat4f mat = {0};
 
 	PMat4fInit(mat);
@@ -184,6 +191,8 @@ void PMat4fScale(PMat4f m, float scale, PMat4f rm)
 /**********/
 void PMat4fTranspose(PMat4f m, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	PMat4f mat = {0};
 
 	int32_t dest = 0;
@@ -206,6 +215,8 @@ void PMat4fTranspose(PMat4f m, PMat4f rm)
 /**********/
 void PMat4fTranslateX(PMat4f m, float pos, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	PMat4f mat = {0};
 
 	PMat4fInit(mat);
@@ -219,6 +230,8 @@ void PMat4fTranslateX(PMat4f m, float pos, PMat4f rm)
 /**********/
 void PMat4fTranslateY(PMat4f m, float pos, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	PMat4f mat = {0};
 
 	PMat4fInit(mat);
@@ -231,6 +244,8 @@ void PMat4fTranslateY(PMat4f m, float pos, PMat4f rm)
 /**********/
 void PMat4fTranslateZ(PMat4f m, float pos, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	PMat4f mat = {0};
 
 	PMat4fInit(mat);
@@ -243,6 +258,8 @@ void PMat4fTranslateZ(PMat4f m, float pos, PMat4f rm)
 /**********/
 void PMat4fRotateX(PMat4f m, float degree, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	float radians = (float)(degree * M_PI / 180.0f);
 
 	PMat4f mat = {0};
@@ -261,6 +278,8 @@ void PMat4fRotateX(PMat4f m, float degree, PMat4f rm)
 /**********/
 void PMat4fRotateY(PMat4f m, float degree, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	float radians = (float)(degree * M_PI / 180.0f);
 
 	PMat4f mat = {0};
@@ -279,6 +298,8 @@ void PMat4fRotateY(PMat4f m, float degree, PMat4f rm)
 /**********/
 void PMat4fRotateZ(PMat4f m, float degree, PMat4f rm)
 {
+	assert(m!=NULL && rm!=NULL);
+
 	float radians = (float)(degree * M_PI / 180.0f);
 
 	PMat4f mat = {0};
@@ -297,6 +318,8 @@ void PMat4fRotateZ(PMat4f m, float degree, PMat4f rm)
 /**********/
 void PMat4fxPMat4f(PMat4f m, PMat4f mul, PMat4f rm)
 {
+	assert(m!=NULL && mul!=NULL && rm!=NULL);
+
 	PMat4f mat = {0};
 
 	for (int32_t i = 0; i < 4; i++)
@@ -346,6 +369,8 @@ void PTriangleClose(PTriangle *t)
 /********/
 static int32_t PStlSorter(void *elem_a, void *elem_b)
 {
+	assert(elem_a!=NULL && elem_b!=NULL);
+
 	PTriangle *t0 = *(PTriangle **)elem_a;
    	PTriangle *t1 = *(PTriangle **)elem_b;
 		
@@ -359,8 +384,10 @@ static int32_t PStlSorter(void *elem_a, void *elem_b)
 }
 
 /**********/
-void PStlLoad(int8_t *file, PStl *stl)
+void PStlLoad(char *file, PStl *stl)
 {
+	assert(file!=NULL);
+
 	stl->data = PAlloc(1,sizeof(PArray));
 	PArrayInit(stl->data);
 
@@ -416,6 +443,8 @@ void PStlLoad(int8_t *file, PStl *stl)
 /**********/
 void PStlClose(PStl *stl)
 {
+	assert(stl!=NULL);
+
 	stl->posx = 0.0f;
 	stl->posy = 0.0f;
 	stl->posz = 0.0f;
@@ -440,6 +469,8 @@ void PStlClose(PStl *stl)
 /**********/
 void PStlDrawWireframe(PStl *stl, Drawer func)
 {
+	assert(stl!=NULL && func!=NULL);
+
 	PMat4f mat = {0};
 	PMat4fInit(mat);
 
@@ -475,6 +506,8 @@ void PStlDrawWireframe(PStl *stl, Drawer func)
 /**********/
 void PStlDrawSolid(PStl *stl, Drawer func)
 {
+	assert(stl!=NULL && func!=NULL);
+
 	PMat4f mat = {0};
 	PMat4fInit(mat);
 
