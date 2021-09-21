@@ -9,6 +9,7 @@
 //std
 #include "stdlib.h"
 #include "stdio.h"
+#include "stdint.h"
 
 //pixie
 #include "pixie_base.h"
@@ -26,19 +27,19 @@
 /*******************/
 /* ENDIANNESS UTIL */
 /*******************/
-static int PEndianness()
+static int32_t PEndianness()
 {
-    volatile unsigned int i=0x01234567;
+    volatile uint32_t i=0x01234567;
     
-    return (*((unsigned char *)(&i))) == 0x67;
+    return (*((uint8_t *)(&i))) == 0x67;
 }
 
 /********/
 /* MATH */
 /********/
-void PSwap(int *a, int *b)
+void PSwap(int32_t *a, int32_t *b)
 {
-    int t = *a;
+    int32_t t = *a;
     *a = *b;
     *b = t;
 }
@@ -52,7 +53,7 @@ void PSwapf(float *a, float *b)
 }
 
 /**********/
-int PMin(int a, int b)
+int32_t PMin(int32_t a, int32_t b)
 {
 	return a <= b ? a : b;
 }
@@ -64,7 +65,7 @@ float PMinf(float a, float b)
 }
 
 /**********/
-int PMax(int a, int b)
+int32_t PMax(int32_t a, int32_t b)
 {
 	return a >= b ? a : b;
 }
@@ -76,7 +77,7 @@ float PMaxf(float a, float b)
 }
 
 /**********/
-int PRand(int min, int max)
+int32_t PRand(int32_t min, int32_t max)
 {
 	return min + rand() / (RAND_MAX / (max - min + 1) + 1);
 }
@@ -93,7 +94,7 @@ float PRandf(float min, float max)
 }
 
 /**********/
-int PMap(int x, int in_min, int in_max, int out_min, int out_max)
+int32_t PMap(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
 {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -105,9 +106,9 @@ float PMapf(float x, float in_min, float in_max, float out_min, float out_max)
 }
 
 /**********/
-int PClamp(int x, int min, int max)
+int32_t PClamp(int32_t x, int32_t min, int32_t max)
 {
-	int t = x < min ? min : x;
+	int32_t t = x < min ? min : x;
 	return t > max ? max : t;
 }
 
@@ -177,7 +178,7 @@ void PArrayClose(PArray *array, Performer func )
 
 	if(func!=NULL)
 	{
-		for(int i=0;i<array->elems_count;i++)
+		for(int32_t i=0;i<array->elems_count;i++)
 		{
 			func(array->elems[i]);
 		}
@@ -206,7 +207,7 @@ void PArrayAdd(PArray *array, void *el)
 }
 
 /*********/
-void *PArrayRemove(PArray* array, int index)
+void *PArrayRemove(PArray* array, int32_t index)
 {
 	assert(array!=NULL);
 
@@ -214,7 +215,7 @@ void *PArrayRemove(PArray* array, int index)
 	
 	void *item = array->elems[index];
 
-	for (int i = index; i < array->elems_count-1; i++)
+	for (int32_t i = index; i < array->elems_count-1; i++)
 	{
 		array->elems[i] = array->elems[i + 1];
 	}
@@ -225,7 +226,7 @@ void *PArrayRemove(PArray* array, int index)
 }
 
 /***********/
-void *PArrayGet(PArray *array, int index)
+void *PArrayGet(PArray *array, int32_t index)
 {
 	assert(array!=NULL);
 
@@ -241,7 +242,7 @@ void PArrayPerform(PArray *array, Performer func )
 
 	if(func!=NULL)
 	{
-		for(int i=0;i<array->elems_count;i++)
+		for(int32_t i=0;i<array->elems_count;i++)
 		{
 			func(array->elems[i]);
 		}
@@ -255,7 +256,7 @@ void PArraySort(PArray *array, Sorter func)
 
 	assert(func!=NULL);
 
-	qsort(array->elems, array->elems_count, sizeof(void*), (int (*)(const void *, const void *))func);
+	qsort(array->elems, array->elems_count, sizeof(void*), (int32_t (*)(const void *, const void *))func);
 }
 
 /*********/
@@ -353,7 +354,7 @@ void *PQueuePeek(PQueue *queue)
 /***********/
 /* BUFFERS */
 /***********/
-void PBufferLoad(char *file, unsigned char **buffer, int *size)
+void PBufferLoad(int8_t *file, uint8_t **buffer, int32_t *size)
 {
 	assert(file!=NULL);
 
@@ -368,7 +369,7 @@ void PBufferLoad(char *file, unsigned char **buffer, int *size)
 
 		_size = ftell(fp);
 
-		*buffer = PAlloc( _size, sizeof(unsigned char));
+		*buffer = PAlloc( _size, sizeof(uint8_t));
 
 		assert(fseek(fp, 0, SEEK_SET)==0);
 
@@ -379,19 +380,19 @@ void PBufferLoad(char *file, unsigned char **buffer, int *size)
 		fclose(fp);
 	}
 
-	if(size!=NULL){ *size = (int)_size; }
+	if(size!=NULL){ *size = (int32_t)_size; }
 }
 
 /**********/
-unsigned char PBufferReadByte(unsigned char **buffer)
+uint8_t PBufferReadByte(uint8_t **buffer)
 {
 	assert(buffer!=NULL);
 
 	assert(*buffer!=NULL);
 
-    unsigned char *buf = &(**buffer);
+    uint8_t *buf = &(**buffer);
 
-    unsigned char val = buf[0];
+    uint8_t val = buf[0];
 
     *buffer += 1;
 
@@ -399,15 +400,15 @@ unsigned char PBufferReadByte(unsigned char **buffer)
 } 
 
 /**********/
-short PBufferReadShort(unsigned char **buffer)
+int16_t PBufferReadShort(uint8_t **buffer)
 {
 	assert(buffer!=NULL);
 
 	assert(*buffer!=NULL);
 
-    unsigned char *buf = &(**buffer);
+    uint8_t *buf = &(**buffer);
 
-    short val = 0x00;
+    int16_t val = 0x00;
 
     if(PEndianness()==P_BIG_ENDIAN)
     {
@@ -424,15 +425,15 @@ short PBufferReadShort(unsigned char **buffer)
 } 
 
 /**********/
-int PBufferReadInt(unsigned char **buffer)
+int32_t PBufferReadInt(uint8_t **buffer)
 {
 	assert(buffer!=NULL);
 
 	assert(*buffer!=NULL);
 
-    unsigned char *buf = &(**buffer);
+    uint8_t *buf = &(**buffer);
 
-    int val = 0x00;
+    int32_t val = 0x00;
     
     if(PEndianness()==P_BIG_ENDIAN)
     {
@@ -450,29 +451,29 @@ int PBufferReadInt(unsigned char **buffer)
 }
 
 /**********/
-float PBufferReadFloat(unsigned char **buffer)
+float PBufferReadFloat(uint8_t **buffer)
 {
 	assert(buffer!=NULL);
 
 	assert(*buffer!=NULL);
 	
-    unsigned char *buf = &(**buffer);
+    uint8_t *buf = &(**buffer);
 
     float output = 0.0f;
 
 	if(PEndianness()==P_BIG_ENDIAN)
     {
-		*((unsigned char*)(&output) + 3) = buf[0];
-		*((unsigned char*)(&output) + 2) = buf[1];
-		*((unsigned char*)(&output) + 1) = buf[2];
-		*((unsigned char*)(&output) + 0) = buf[3];
+		*((uint8_t*)(&output) + 3) = buf[0];
+		*((uint8_t*)(&output) + 2) = buf[1];
+		*((uint8_t*)(&output) + 1) = buf[2];
+		*((uint8_t*)(&output) + 0) = buf[3];
 	}
 	else
 	{
-		*((unsigned char*)(&output) + 3) = buf[3];
-		*((unsigned char*)(&output) + 2) = buf[2];
-		*((unsigned char*)(&output) + 1) = buf[1];
-		*((unsigned char*)(&output) + 0) = buf[0];
+		*((uint8_t*)(&output) + 3) = buf[3];
+		*((uint8_t*)(&output) + 2) = buf[2];
+		*((uint8_t*)(&output) + 1) = buf[1];
+		*((uint8_t*)(&output) + 0) = buf[0];
 	}
 
     *buffer += 4;

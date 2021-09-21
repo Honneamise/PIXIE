@@ -8,9 +8,9 @@ typedef unsigned char *PImage;
 typedef unsigned char *PFont;
 typedef unsigned char *PSound;
 
-/*********/
-/* PIXIE */
-/*********/
+/********/
+/* CORE */
+/********/
 void PixieDebug();
 
 void PixieInit(int w, int h, int screen);
@@ -97,11 +97,11 @@ void PixieFontGetStringSize(char *s, int *w, int *h);
 /*********/
 /* AUDIO */
 /*********/
-void PixieAudioLoadSound(char *file,  PSound *buffer, int *size, int *format, int *rate);
+void PixieAudioLoadSound(char *file, PSound *buffer, int *size, int *format, int *rate);
 
-void PixieAudioPlaySound(PSound buffer, int size, int format, int sample_rate);
+void PixieAudioPlaySound(PSound buffer, int size, int format, int rate);
 
-void PixieAudioLoopSound(PSound buffer, int size, int format, int sample_rate);
+void PixieAudioLoopSound(PSound buffer, int size, int format, int rate);
 
 void PixieAudioStopSound();
 

@@ -22,8 +22,12 @@
 #include "OPENAL/INCLUDE/al.h"
 #include "OPENAL/INCLUDE/alc.h"
 
+//assert
+#include "assert.h"
+
 //std
 #include "stdio.h"
+#include "stdint.h"
 
 //math
 #define _USE_MATH_DEFINES
@@ -87,16 +91,16 @@
 /************/
 typedef struct Pixie
 {
-    int width;
-    int height;
-    int client_w;
-    int client_h;
-    int viewport_w;
-    int viewport_h;
+    int32_t width;
+    int32_t height;
+    int32_t client_w;
+    int32_t client_h;
+    int32_t viewport_w;
+    int32_t viewport_h;
 
-    unsigned char *buffer;
+    uint8_t *buffer;
 
-    int screen;
+    int32_t screen;
 
     HDC hdc;
     HWND hwnd;
@@ -117,24 +121,24 @@ typedef struct Pixie
     ALuint asnd;
     ALuint atones[P_NUM_TONES];
 
-    unsigned char color;
+    uint8_t color;
 
-    int font_w;
-    int font_h;
-    int font_scale;
-    unsigned char *font;
+    int32_t font_w;
+    int32_t font_h;
+    int32_t font_scale;
+    uint8_t *font;
 
     LARGE_INTEGER freq;
     LARGE_INTEGER timer;
-    int delta;
+    int32_t delta;
 
-    int event;
-	int key;
-    int ascii_key;
-	int mousex;
-	int mousey;
-	int button;
-	int wheel_dir;
+    int32_t event;
+	int32_t key;
+    int32_t ascii_key;
+	int32_t mousex;
+	int32_t mousey;
+	int32_t button;
+	int32_t wheel_dir;
     
 } Pixie;
 
@@ -189,7 +193,7 @@ static const float P_TEXTURE_VERTICES[P_TEXTURE_NUM_VERTICES] =
  1.0f,  1.0f, 1.0f, 0.0f
 };
 
-static const char P_VERT_SRC[] = "\
+static const uint8_t P_VERT_SRC[] = "\
 #version 450\n\
 \n\
 layout (location = 0) in vec2 Pos;\n\
@@ -204,7 +208,7 @@ void main()\n\
     Tex = Uv;\n\
 }\n";
 
-static const char P_FRAG_SRC[] = "\
+static const uint8_t P_FRAG_SRC[] = "\
 #version 450\n\
 \n\
 in vec2 Tex;\n\
@@ -228,7 +232,7 @@ static const float P_TONE_FREQS[7] =
     262.00f, 294.00f, 330.00f, 350.00f, 392.00f, 440.00f, 494.00f
 };
 
-static const unsigned char P_FONT[2048] = 
+static const uint8_t P_FONT[2048] = 
 {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x81, 0xA5, 0x81, 0xBD, 0x99, 0x81, 0x7E, 
 0x7E, 0xFF, 0xDB, 0xFF, 0xC3, 0xE7, 0xFF, 0x7E, 0x6C, 0xFE, 0xFE, 0xFE, 0x7C, 0x38, 0x10, 0x00, 
@@ -406,10 +410,10 @@ static PFNWGLGETSWAPINTERVALEXTPROC wglGetSwapIntervalEXT = NULL;
 /************/
 /* LOG UTIL */
 /************/
-static void PixieError(char *str, ...)
+static void PixieError(uint8_t *str, ...)
 {
     #if defined(_MSC_VER) && defined(_DEBUG)
-        int flag = 0;
+        int32_t flag = 0;
 
         flag &= ~_CRTDBG_ALLOC_MEM_DF;
         _CrtSetDbgFlag(flag);
@@ -436,9 +440,9 @@ static void PixieError(char *str, ...)
 /****************/
 /* BUFFER UTILS */
 /****************/
-static int PixieBufferReadNumber(unsigned char **buffer)
+static int32_t PixieBufferReadNumber(uint8_t **buffer)
 {
-   int val = 0;
+   int32_t val = 0;
 
     while(isdigit(**buffer))
     {
@@ -450,7 +454,7 @@ static int PixieBufferReadNumber(unsigned char **buffer)
 } 
 
 /**********/
-static void PixieBufferSkipBlanks(unsigned char **buffer)
+static void PixieBufferSkipBlanks(uint8_t **buffer)
 {
     while(**buffer==P_CHARSET_SP ||
             **buffer==P_CHARSET_TAB ||
@@ -462,7 +466,7 @@ static void PixieBufferSkipBlanks(unsigned char **buffer)
 }
 
 /**********/
-static void PixieBufferSkipLine(unsigned char **buffer)
+static void PixieBufferSkipLine(uint8_t **buffer)
 {
     while(**buffer != P_CHARSET_LF)
     {
@@ -475,12 +479,12 @@ static void PixieBufferSkipLine(unsigned char **buffer)
 /***************/
 /* IMAGE UTILS */
 /***************/
-static void PixieImageVertFlip(unsigned char *buffer, int w, int h)
+static void PixieImageVertFlip(uint8_t *buffer, int32_t w, int32_t h)
 {
-    int start = 0;
-    int end = h-1;
+    int32_t start = 0;
+    int32_t end = h-1;
 
-    unsigned char *t = PAlloc(w,sizeof(unsigned char));
+    uint8_t *t = PAlloc(w,sizeof(uint8_t));
 
     while(start<end)
     {
@@ -498,23 +502,23 @@ static void PixieImageVertFlip(unsigned char *buffer, int w, int h)
 }
 
 /**********/
-static void PixieImageNormalize(unsigned char *buffer, int w, int h)
+static void PixieImageNormalize(uint8_t *buffer, int32_t w, int32_t h)
 {
-    unsigned char d = 0xFF / (P_NUM_COLORS+1);
+    uint8_t d = 0xFF / (P_NUM_COLORS+1);
 
-	for(int i=0;i<h;i++)
+	for(int32_t i=0;i<h;i++)
 	{
-		for(int j=0;j<w;j++)
+		for(int32_t j=0;j<w;j++)
 		{
-			unsigned char oldPixel = buffer[i*w+j];
+			uint8_t oldPixel = buffer[i*w+j];
 
-			unsigned char newPixel = 0x00;
+			uint8_t newPixel = 0x00;
 
             newPixel = (oldPixel/d)*d;
 
 			buffer[i*w+j] = newPixel;
 
-			unsigned char quant_error = (oldPixel - newPixel);
+			uint8_t quant_error = (oldPixel - newPixel);
 
 			if(j<w-1)
             { 
@@ -539,9 +543,9 @@ static void PixieImageNormalize(unsigned char *buffer, int w, int h)
 		}
 	}
 
-    unsigned char q = 0xFF / P_NUM_COLORS;
+    uint8_t q = 0xFF / P_NUM_COLORS;
 
-	for(int k=0;k<w*h;k++)
+	for(int32_t k=0;k<w*h;k++)
 	{
         buffer[k] = buffer[k]/q;
 	}
@@ -549,10 +553,10 @@ static void PixieImageNormalize(unsigned char *buffer, int w, int h)
 }
 
 /**********/
-static void PixieImageLoadPbm(unsigned char **buf, unsigned char **buffer, int *w, int *h)
+static void PixieImageLoadPbm(uint8_t **buf, uint8_t **buffer, int32_t *w, int32_t *h)
 {
-	int _w = 0;
-	int _h = 0;
+	int32_t _w = 0;
+	int32_t _h = 0;
 	
     PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
@@ -566,13 +570,13 @@ static void PixieImageLoadPbm(unsigned char **buf, unsigned char **buffer, int *
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
 
 	//allocate data
-	*buffer = PAlloc( _w*_h, sizeof(unsigned char));
+	*buffer = PAlloc( _w*_h, sizeof(uint8_t));
 	
 	//read data
-	int liner = 0;
-	int line_counter = 0;
-    int elem_counter = 0;
-	unsigned char byte = 0x00;
+	int32_t liner = 0;
+	int32_t line_counter = 0;
+    int32_t elem_counter = 0;
+	uint8_t byte = 0x00;
 
 	while(line_counter<_h)
 	{
@@ -580,11 +584,11 @@ static void PixieImageLoadPbm(unsigned char **buf, unsigned char **buffer, int *
 
 		byte = ~byte;
 
-		for(int i=7;i>=0;i--)
+		for(int32_t i=7;i>=0;i--)
 		{
-			unsigned char b = ((byte>>i) & 1 ) * 0xFF;
+			uint8_t b = ((byte>>i) & 1 ) * 0xFF;
 
-            ((unsigned char *)(*buffer))[elem_counter] = (b==0x0) ? P_COLOR_0 : P_COLOR_3;
+            ((uint8_t *)(*buffer))[elem_counter] = (b==0x0) ? P_COLOR_0 : P_COLOR_3;
 
 			elem_counter++;
 
@@ -602,10 +606,10 @@ static void PixieImageLoadPbm(unsigned char **buf, unsigned char **buffer, int *
 }
 
 /**********/
-static void PixieImageLoadPgm(unsigned char **buf, unsigned char **buffer, int *w, int *h)
+static void PixieImageLoadPgm(uint8_t **buf, uint8_t **buffer, int32_t *w, int32_t *h)
 {
-	int _w = 0;
-	int _h = 0;
+	int32_t _w = 0;
+	int32_t _h = 0;
 
 	PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
@@ -617,19 +621,19 @@ static void PixieImageLoadPgm(unsigned char **buf, unsigned char **buffer, int *
 
     PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
-    int depth = PixieBufferReadNumber(buf);
+    int32_t depth = PixieBufferReadNumber(buf);
 	if(depth!=255){ PixieError("[%s]: depth format not supported", __func__); }
 
     PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
 
 	//allocate data
-	*buffer = PAlloc( _w*_h, sizeof(unsigned char));
+	*buffer = PAlloc( _w*_h, sizeof(uint8_t));
 	
 	//read data
-	for(int i=0;i<_w*_h;i++)
+	for(int32_t i=0;i<_w*_h;i++)
 	{
-		((unsigned char *)(*buffer))[i] = **buf;
+		((uint8_t *)(*buffer))[i] = **buf;
 
         *buf += 1;
 	}
@@ -640,10 +644,10 @@ static void PixieImageLoadPgm(unsigned char **buf, unsigned char **buffer, int *
 }
 
 /**********/
-static void PixieImageLoadPpm(unsigned char **buf, unsigned char **buffer, int *w, int *h)
+static void PixieImageLoadPpm(uint8_t **buf, uint8_t **buffer, int32_t *w, int32_t *h)
 {
-	int _w = 0;
-	int _h = 0;
+	int32_t _w = 0;
+	int32_t _h = 0;
 	
     PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
@@ -655,28 +659,28 @@ static void PixieImageLoadPpm(unsigned char **buf, unsigned char **buffer, int *
 
     PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
-    int depth = PixieBufferReadNumber(buf);
+    int32_t depth = PixieBufferReadNumber(buf);
 	if(depth!=255){ PixieError("[%s]: depth format not supported", __func__); }
 
     PixieBufferSkipBlanks(buf);
     while(**buf==P_CHARSET_HASH) { PixieBufferSkipLine(buf); }
 
 	//allocate data
-	*buffer = PAlloc( _w*_h, sizeof(unsigned char));
+	*buffer = PAlloc( _w*_h, sizeof(uint8_t));
 	
 	//read data
-	for(int i=0;i<_w*_h;i++)
+	for(int32_t i=0;i<_w*_h;i++)
 	{
-        unsigned char r = **buf;
+        uint8_t r = **buf;
         *buf += 1;
-        unsigned char g = **buf;
+        uint8_t g = **buf;
         *buf += 1;
-        unsigned char b = **buf;
+        uint8_t b = **buf;
         *buf += 1;
 
-		unsigned char byte = (unsigned char)( r * P_IMAGE_R_FILTER + g * P_IMAGE_G_FILTER + b * P_IMAGE_B_FILTER);
+		uint8_t byte = (uint8_t)( r * P_IMAGE_R_FILTER + g * P_IMAGE_G_FILTER + b * P_IMAGE_B_FILTER);
 
-        ((unsigned char *)(*buffer))[i] = byte;
+        ((uint8_t *)(*buffer))[i] = byte;
 
 	}
 
@@ -686,27 +690,27 @@ static void PixieImageLoadPpm(unsigned char **buf, unsigned char **buffer, int *
 }
 
 /**********/
-static void PixieImageLoadBmp1(unsigned char *buf, int width, int height, int bits, unsigned char **buffer)
+static void PixieImageLoadBmp1(uint8_t *buf, int32_t width, int32_t height, int32_t bits, uint8_t **buffer)
 {
-    int row = (bits * width + 31) / 32 * 4;
+    int32_t row = (bits * width + 31) / 32 * 4;
 
-	*buffer = PAlloc(width*height, sizeof(unsigned char));
+	*buffer = PAlloc(width*height, sizeof(uint8_t));
 	
-    int counter = 0;
-    int elems_counter = 0;
-	for(int i=height-1;i>=0;i--)
+    int32_t counter = 0;
+    int32_t elems_counter = 0;
+	for(int32_t i=height-1;i>=0;i--)
 	{
         counter = width*i;
 
-        for(int j=0;j<width/8;j++)
+        for(int32_t j=0;j<width/8;j++)
         {
-            unsigned char byte = buf[j];
+            uint8_t byte = buf[j];
 
-            for(int k=7;k>=0;k--)
+            for(int32_t k=7;k>=0;k--)
             {
-                unsigned char b = ((byte>>k) & 1 ) * 0xFF;
+                uint8_t b = ((byte>>k) & 1 ) * 0xFF;
 
-                ((unsigned char *)(*buffer))[counter] = (b==0x0) ? P_COLOR_0 : P_COLOR_3;
+                ((uint8_t *)(*buffer))[counter] = (b==0x0) ? P_COLOR_0 : P_COLOR_3;
 
                 counter++;
 
@@ -720,27 +724,27 @@ static void PixieImageLoadBmp1(unsigned char *buf, int width, int height, int bi
 }
 
 /**********/
-static void PixieImageLoadBmp24(unsigned char *buf, int width, int height, int bits,  unsigned char **buffer)
+static void PixieImageLoadBmp24(uint8_t *buf, int32_t width, int32_t height, int32_t bits,  uint8_t **buffer)
 {
-    int row = (bits * width + 31) / 32 * 4;
+    int32_t row = (bits * width + 31) / 32 * 4;
 
-	*buffer = PAlloc( width*height, sizeof(unsigned char));
+	*buffer = PAlloc( width*height, sizeof(uint8_t));
 	
-    int counter = 0;
+    int32_t counter = 0;
 
-	for(int i=height-1;i>=0;i--)
+	for(int32_t i=height-1;i>=0;i--)
 	{
         counter = width*i;
 
-        for(int j=0;j<width*3;j+=3)
+        for(int32_t j=0;j<width*3;j+=3)
         {
-            unsigned char r = buf[j];
-            unsigned char g = buf[j+1];
-            unsigned char b = buf[j+2];
+            uint8_t r = buf[j];
+            uint8_t g = buf[j+1];
+            uint8_t b = buf[j+2];
         
-		    unsigned char byte = (unsigned char)(r*P_IMAGE_R_FILTER + g*P_IMAGE_G_FILTER + b*P_IMAGE_B_FILTER);
+		    uint8_t byte = (uint8_t)(r*P_IMAGE_R_FILTER + g*P_IMAGE_G_FILTER + b*P_IMAGE_B_FILTER);
 
-            ((unsigned char *)(*buffer))[counter] = byte;
+            ((uint8_t *)(*buffer))[counter] = byte;
             
             counter++;
         }
@@ -750,25 +754,25 @@ static void PixieImageLoadBmp24(unsigned char *buf, int width, int height, int b
 }
 
 /**********/
-static void PixieImageLoadBmp(unsigned char **buf, unsigned char **buffer, int *w, int *h)
+static void PixieImageLoadBmp(uint8_t **buf, uint8_t **buffer, int32_t *w, int32_t *h)
 {
-    unsigned char *b = *buf;
+    uint8_t *b = *buf;
 
     PBufferReadInt(buf);                            //file size, not used
     PBufferReadInt(buf);                            //reserved fields, not used
 
-    unsigned int offset = PBufferReadInt(buf);      //data offset
+    uint32_t offset = PBufferReadInt(buf);          //data offset
     PBufferReadInt(buf);                            //info size, not used
     
-    int _w = PBufferReadInt(buf);                   //image width
-    int _h = PBufferReadInt(buf);                   //image height
+    int32_t _w = PBufferReadInt(buf);               //image width
+    int32_t _h = PBufferReadInt(buf);               //image height
 
     PBufferReadShort(buf);                          //planes, not used
 
-    unsigned short bits = PBufferReadShort(buf);    //bits per pixel
-    unsigned int comp = PBufferReadInt(buf);        //compression type
+    uint16_t bits = PBufferReadShort(buf);          //bits per pixel
+    uint32_t comp = PBufferReadInt(buf);            //compression type
 
-    if(comp!=0){ PixieError("[%s]: Compressed bitmap not supported", __func__); }
+    if(comp!=0){ PixieError("[%s]: compressed bitmap not supported", __func__); }
 
     b += offset - 2;//cause we already have removed the magic bytes
 
@@ -784,7 +788,7 @@ static void PixieImageLoadBmp(unsigned char **buf, unsigned char **buffer, int *
             PixieImageNormalize(*buffer,_w,_h);
             break;
         default:
-            PixieError("[%s]: Unsupported bits depth (%d)", __func__, bits);
+            PixieError("[%s]: unsupported bits depth (%d)", __func__, bits);
             break;
     }
 
@@ -853,16 +857,16 @@ static void PixieOpenglCreateContext()
     pfd.cStencilBits = 8;
     pfd.iLayerType = PFD_MAIN_PLANE;
     
-    int pixel_format = ChoosePixelFormat(pixie->hdc, &pfd);
-    if(pixel_format==0) { PixieError("[%s]: Failed to select pixel format", __func__); }
+    int32_t pixel_format = ChoosePixelFormat(pixie->hdc, &pfd);
+    if(pixel_format==0) { PixieError("[%s]: failed to select pixel format", __func__); }
     
-    int res = SetPixelFormat(pixie->hdc, pixel_format, &pfd);
-    if(res==0) { PixieError("[%s]: Failed to set pixel format", __func__); }
+    int32_t res = SetPixelFormat(pixie->hdc, pixel_format, &pfd);
+    if(res==0) { PixieError("[%s]: failed to set pixel format", __func__); }
 
     pixie->hglrc = wglCreateContext(pixie->hdc);
-    if(!pixie->hglrc){ PixieError("[%s]: Failed to create std opengl context", __func__); }
+    if(!pixie->hglrc){ PixieError("[%s]: failed to create std opengl context", __func__); }
 
-    if(!wglMakeCurrent(pixie->hdc, pixie->hglrc)){ PixieError("[%s]: Failed to set std opengl context", __func__); }
+    if(!wglMakeCurrent(pixie->hdc, pixie->hglrc)){ PixieError("[%s]: failed to set std opengl context", __func__); }
 
     wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
     wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
@@ -871,25 +875,25 @@ static void PixieOpenglCreateContext()
     if( !wglCreateContextAttribsARB || 
         !wglSwapIntervalEXT ||
         !wglGetSwapIntervalEXT )
-        { PixieError("[%s]: Failed to get wgl functions", __func__);  return; }
+        { PixieError("[%s]: failed to get wgl functions", __func__);  return; }
 
-    int attributes[] = {
+    int32_t attributes[] = {
     WGL_CONTEXT_MAJOR_VERSION_ARB, P_OPENGL_MAJOR, 
     WGL_CONTEXT_MINOR_VERSION_ARB, P_OPENGL_MINOR,
     WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, 0 };
 
     HGLRC hglrc = wglCreateContextAttribsARB(pixie->hdc, NULL, attributes);
-    if(!hglrc) { PixieError("[%s]: Failed to create opengl context", __func__); }
+    if(!hglrc) { PixieError("[%s]: failed to create opengl context", __func__); }
     
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(pixie->hglrc);
-    if(!wglMakeCurrent(pixie->hdc, hglrc) ) { PixieError("[%s]: Failed to set opengl context", __func__); }
+    if(!wglMakeCurrent(pixie->hdc, hglrc) ) { PixieError("[%s]: failed to set opengl context", __func__); }
 
 }
 
 /**********/
 #if defined(_MSC_VER) && defined(_DEBUG)
-static char *PixieOpenglDebugSource(GLenum source)
+static uint8_t *PixieOpenglDebugSource(GLenum source)
 {
     switch (source)
 	{
@@ -907,7 +911,7 @@ static char *PixieOpenglDebugSource(GLenum source)
 
 /*********/
 #if defined(_MSC_VER) && defined(_DEBUG)
-static char *PixieOpenglDebugType(GLenum type)
+static uint8_t *PixieOpenglDebugType(GLenum type)
 {
 	switch (type)
 	{
@@ -928,7 +932,7 @@ static char *PixieOpenglDebugType(GLenum type)
 
 /**********/
 #if defined(_MSC_VER) && defined(_DEBUG)
-static char *PixieOpenglDebugSeverity(GLenum severity)
+static uint8_t *PixieOpenglDebugSeverity(GLenum severity)
 {
 	switch (severity)
 	{
@@ -966,7 +970,7 @@ static void APIENTRY PixieOpenglDebugCallback(GLenum source,
 #endif
 
 /**********/
-static GLuint PixieOpenglShader(GLenum type, char *src)
+static GLuint PixieOpenglShader(GLenum type, uint8_t *src)
 {
 	GLuint shader = glCreateShader(type);
 
@@ -980,15 +984,15 @@ static GLuint PixieOpenglShader(GLenum type, char *src)
 
 	if (check == GL_FALSE)
 	{
-		int len = 0;
+		int32_t len = 0;
 
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
 
-		char* msg = PAlloc(len, sizeof(char));
+		uint8_t* msg = PAlloc(len, sizeof(uint8_t));
 
 		glGetShaderInfoLog(shader, len, &len, msg);
 
-		PixieError("[%s]: Shader compile failed : %s", __func__, msg);
+		PixieError("[%s]: shader compile failed : %s", __func__, msg);
 	}
 
 	return shader;
@@ -1011,15 +1015,15 @@ static GLuint PixieOpenglProgramShader(GLuint vert_shader, GLuint frag_shader)
 
 	if (check == GL_FALSE)
 	{
-		int len = 0;
+		int32_t len = 0;
 
 		glGetProgramiv(prog_shader, GL_INFO_LOG_LENGTH, &len);
 
-		char* msg = PAlloc(len, sizeof(char));
+		uint8_t* msg = PAlloc(len, sizeof(uint8_t));
 
 		glGetProgramInfoLog(prog_shader, len, &len, msg);
 
-		PixieError("[%s]: Shader link failed : %s", __func__, msg);
+		PixieError("[%s]: shader link failed : %s", __func__, msg);
 	}
 
 	return prog_shader;
@@ -1061,9 +1065,9 @@ static void PixieOpenglInit()
 	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, pixie->width, pixie->height, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
 
-	pixie->vert_shader = PixieOpenglShader(GL_VERTEX_SHADER, (char*)P_VERT_SRC);
+	pixie->vert_shader = PixieOpenglShader(GL_VERTEX_SHADER, (uint8_t*)P_VERT_SRC);
 
-    pixie->frag_shader = PixieOpenglShader(GL_FRAGMENT_SHADER, (char*)P_FRAG_SRC);
+    pixie->frag_shader = PixieOpenglShader(GL_FRAGMENT_SHADER, (uint8_t*)P_FRAG_SRC);
 
     pixie->prog_shader = PixieOpenglProgramShader(pixie->vert_shader, pixie->frag_shader);
 
@@ -1076,20 +1080,20 @@ static void PixieOpenglInit()
 /**********/
 static void PixieOpenglViewport()
 {
-	int x = 0;
-	int y = 0;
+	int32_t x = 0;
+	int32_t y = 0;
 
 	float ratio = (float)pixie->width/(float)pixie->height;
 
 	if( pixie->client_w/ratio < pixie->client_h)
 	{
 		pixie->viewport_w = pixie->client_w;
-		pixie->viewport_h = (int)((float)pixie->viewport_w/ratio);
+		pixie->viewport_h = (int32_t)((float)pixie->viewport_w/ratio);
 	}
 	else
 	{
 		pixie->viewport_h = pixie->client_h;
-		pixie->viewport_w = (int)((float)pixie->viewport_h*ratio);
+		pixie->viewport_w = (int32_t)((float)pixie->viewport_h*ratio);
 	}
 
 	x = (pixie->client_w-pixie->viewport_w)/2;
@@ -1113,7 +1117,7 @@ static void PixieOpenglSwapbuffers()
 /****************/
 /* OPENAL UTILS */
 /****************/
-static char *PixieOpenalError(int err)
+static uint8_t *PixieOpenalError(int32_t err)
 {
     switch(err) 
     {
@@ -1131,37 +1135,37 @@ static char *PixieOpenalError(int err)
 /**********/
 static void PixieOpenalCheckError()
 {
-    int err = alGetError();
+    int32_t err = alGetError();
 
 	if(err!=0)
     {
-        PixieError("[%s]: Shader link failed : %s", __func__, PixieOpenalError(err));
+        PixieError("[%s]: shader link failed : %s", __func__, PixieOpenalError(err));
     }
 }
 
 /**********/
-static void PixieOpenalGenerateTone(unsigned char *buf, int sample_rate, float freq)
+static void PixieOpenalGenerateTone(uint8_t *buf, int32_t sample_rate, float freq)
 {
-    for(int i=0;i<sample_rate;i++)
+    for(int32_t i=0;i<sample_rate;i++)
     {
-        buf[i] = (unsigned char)( 0xFF * sin( M_PI*freq/sample_rate*i ) );
+        buf[i] = (uint8_t)( 0xFF * sin( M_PI*freq/sample_rate*i ) );
     }
 }
 
 /**********/
 static void PixieOpenalInit()
 {
-    char *name = (char *)alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+    uint8_t *name = (uint8_t *)alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
     
     pixie->adev = alcOpenDevice(name);
 
-    if(!pixie->adev){ PixieError("[%s]: Audio device open failed", __func__); };
+    if(!pixie->adev){ PixieError("[%s]: audio device open failed", __func__); };
 
     pixie->actx = alcCreateContext(pixie->adev, NULL);
 
-    if(!pixie->actx){ PixieError("[%s]: Audio context creation failed"); }
+    if(!pixie->actx){ PixieError("[%s]: audio context creation failed"); }
 
-    if(!alcMakeContextCurrent(pixie->actx)){ PixieError("[%s]: Setting audio context failed", __func__); }
+    if(!alcMakeContextCurrent(pixie->actx)){ PixieError("[%s]: setting audio context failed", __func__); }
 
     alGenSources(1, &pixie->asrc_snd);
     PixieOpenalCheckError();
@@ -1176,25 +1180,29 @@ static void PixieOpenalInit()
     PixieOpenalCheckError();
 
     //tones generation
-    unsigned char *buf = PAlloc(P_TONE_SAMPLE_RATE,sizeof(unsigned char));
+    uint8_t *buf = PAlloc(P_TONE_SAMPLE_RATE,sizeof(uint8_t));
 
-    for(int i=0;i<P_NUM_TONES;i++)
+    for(int32_t i=0;i<P_NUM_TONES;i++)
     {
         PixieOpenalGenerateTone(buf, P_TONE_SAMPLE_RATE, P_TONE_FREQS[i]);
         alBufferData(pixie->atones[i], AL_FORMAT_MONO8, buf, P_TONE_SAMPLE_RATE, P_TONE_SAMPLE_RATE);
+        PixieOpenalCheckError();
     } 
 
     PFree(buf); 
 
     alSourcef(pixie->asrc_snd, AL_GAIN, P_DEFAULT_VOLUME);
+    PixieOpenalCheckError();
+
     alSourcef(pixie->asrc_tone, AL_GAIN, P_DEFAULT_VOLUME);
+    PixieOpenalCheckError();
 
 }
 
 /**********/
 static void PixieOpenalClose()
 {
-    int status = 0;
+    int32_t status = 0;
 
     alGetSourcei(pixie->asrc_snd, AL_SOURCE_STATE, &status);
     if(status!=AL_STOPPED) { alSourceStop(pixie->asrc_snd); }
@@ -1220,11 +1228,11 @@ static void PixieOpenalClose()
 /****************/
 /* WINDOW UTILS */
 /****************/
-static int PixieWndVKtoAscii(int vk)
+static int32_t PixieWndVKtoAscii(int32_t vk)
 {
-    int scancode = 0;
-    unsigned short key = 0;
-    unsigned char keyboard[256] = {0};
+    int32_t scancode = 0;
+    uint16_t key = 0;
+    uint8_t keyboard[256] = {0};
 
     scancode = MapVirtualKey(vk,MAPVK_VK_TO_VSC);
 
@@ -1252,20 +1260,20 @@ static LRESULT CALLBACK PixieWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
             return 0;
 
         case WM_SIZE:
-            pixie->client_w = (int)LOWORD(lParam);
-            pixie->client_h = (int)HIWORD(lParam);
+            pixie->client_w = (int32_t)LOWORD(lParam);
+            pixie->client_h = (int32_t)HIWORD(lParam);
             PixieOpenglViewport();
             break;
 
         case WM_KEYDOWN: 
             pixie->event = P_KEYPRESS;
-            pixie->key = (int)wParam;
+            pixie->key = (int32_t)wParam;
             pixie->ascii_key = PixieWndVKtoAscii(pixie->key);
             break;
 
         case WM_KEYUP: 
             pixie->event = P_KEYRELEASE;
-            pixie->key = (int)wParam;
+            pixie->key = (int32_t)wParam;
             pixie->ascii_key = PixieWndVKtoAscii(pixie->key);
             break;
 
@@ -1339,7 +1347,7 @@ static void PixieWndRegisterClass()
     wc.lpfnWndProc = PixieWndProc;
     wc.hCursor = LoadCursor(NULL, IDC_CROSS);
 
-    if( !RegisterClass(&wc) ) { PixieError("[%s]: Failed to register class\n", __func__); }
+    if( !RegisterClass(&wc) ) { PixieError("[%s]: failed to register class\n", __func__); }
 }
 
 /**********/
@@ -1351,7 +1359,7 @@ static void PixieWndCreateWindow()
 
     pixie->hwnd = CreateWindow((LPCSTR)(P_WND_CLASS), P_VERSION, WS_OVERLAPPEDWINDOW , CW_USEDEFAULT, CW_USEDEFAULT, rect.right-rect.left, rect.bottom-rect.top, NULL, NULL, NULL, NULL);
 
-    if(!pixie->hwnd) { PixieError("[%s]: Failed to create window", __func__); return; }
+    if(!pixie->hwnd) { PixieError("[%s]: failed to create window", __func__); return; }
 
     GetWindowPlacement(pixie->hwnd, &pixie->hwndPlacement);    
 }
@@ -1377,9 +1385,9 @@ static void PixieWndShowInitialWindow()
     }
 }
 
-/*********/
-/* PIXIE */
-/*********/
+/********/
+/* CORE */
+/********/
 void PixieDebug()
 {
     #if defined(_MSC_VER) && defined(_DEBUG)
@@ -1394,8 +1402,10 @@ void PixieDebug()
 }
 
 /**********/
-void PixieInit(int w, int h, int screen)
+void PixieInit(int32_t w, int32_t h, int32_t screen)
 {
+    assert( w>0 && h>0 );
+
     #if defined(_MSC_VER) && defined(_DEBUG)
         PixieDebug();
     #endif
@@ -1411,14 +1421,14 @@ void PixieInit(int w, int h, int screen)
 
     pixie->screen = screen;
 
-    pixie->buffer = PAlloc(w*h, sizeof(unsigned char));
+    pixie->buffer = PAlloc(w*h, sizeof(uint8_t));
 
     pixie->color = P_COLOR_3;
 
 	pixie->font_w = P_FONT_W;
 	pixie->font_h = P_FONT_H;
 	pixie->font_scale = P_FONT_SCALE;
-	pixie->font = (unsigned char *)P_FONT;
+	pixie->font = (uint8_t *)P_FONT;
 	
     PixieWndRegisterClass();
 
@@ -1450,7 +1460,7 @@ void PixieInit(int w, int h, int screen)
 /**********/
 void PixieClose()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
     glDeleteTextures(1, &pixie->texture);
 
@@ -1484,13 +1494,13 @@ void PixieClose()
 
     PFree(pixie);
     
-    srand((unsigned int)time(NULL));
+    srand((uint32_t)time(NULL));
 }
 
 /**********/
 void PixieToggleFullScreen()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
     long style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 
@@ -1516,9 +1526,9 @@ void PixieToggleFullScreen()
 /**********/
 void PixieToggleVsync()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); }
+    assert(pixie!=NULL);
 
-    int val = wglGetSwapIntervalEXT();
+    int32_t val = wglGetSwapIntervalEXT();
 
     if(val==0) { wglSwapIntervalEXT(1); }
     else { wglSwapIntervalEXT(0); }
@@ -1527,11 +1537,11 @@ void PixieToggleVsync()
 /**********/
 /* RENDER */
 /**********/
-void PixieRenderClear(int col)
+void PixieRenderClear(int32_t col)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
-	unsigned char _col = col % P_NUM_COLORS;
+	uint8_t _col = col % P_NUM_COLORS;
 
 	memset(pixie->buffer,_col,pixie->width*pixie->height);
 }
@@ -1539,7 +1549,7 @@ void PixieRenderClear(int col)
 /**********/
 void PixieRenderDraw()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pixie->width, pixie->height, GL_RED, GL_UNSIGNED_BYTE, pixie->buffer);
 
@@ -1549,17 +1559,17 @@ void PixieRenderDraw()
 }
 
 /**********/
-int PixieRenderGetWidth()
+int32_t PixieRenderGetWidth()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
 	return pixie->width;
 }
 
 /**********/
-int PixieRenderGetHeight()
+int32_t PixieRenderGetHeight()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
 	return pixie->height;
 }
@@ -1567,28 +1577,28 @@ int PixieRenderGetHeight()
 /*********************/
 /* COLOR AND PALETTE */
 /*********************/
-void PixieColorSet(int col)
+void PixieColorSet(int32_t col)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
 	pixie->color = col % P_NUM_COLORS;
 }
 
 /**********/
-void PixiePaletteSet(int pal)
+void PixiePaletteSet(int32_t pal)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
-	int index = (pal % P_NUMPALETTES)*P_PALETTE_SIZE;
+	int32_t index = (pal % P_NUMPALETTES)*P_PALETTE_SIZE;
 
     float v[P_PALETTE_SIZE]={0};
 	
-	for(int i=0;i<P_PALETTE_SIZE;i++)
+	for(int32_t i=0;i<P_PALETTE_SIZE;i++)
 	{
 		v[i] = (float)P_PALETTES[index+i] / 255.0f;
     }
 
-	int loc = glGetUniformLocation(pixie->prog_shader, P_PALETTE_LOCATION);
+	int32_t loc = glGetUniformLocation(pixie->prog_shader, P_PALETTE_LOCATION);
 
     glUniform3fv(loc, 4, v);
 
@@ -1597,9 +1607,9 @@ void PixiePaletteSet(int pal)
 /***********/
 /* DRAWING */
 /***********/
-void PixieDrawPoint(int x, int y)
+void PixieDrawPoint(int32_t x, int32_t y)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
 	if(x>=0 && x<pixie->width && y>=0 && y<pixie->height)
 	{
@@ -1608,23 +1618,23 @@ void PixieDrawPoint(int x, int y)
 }
 
 /**********/
-void PixieDrawLine(int srcx, int srcy, int dstx, int dsty)
+void PixieDrawLine(int32_t srcx, int32_t srcy, int32_t dstx, int32_t dsty)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
     if(srcy==dsty)//h-line
     {
         if(srcy<0 || srcy>=pixie->height){ return; }
 
-        int start = PMin(srcx,dstx);
+        int32_t start = PMin(srcx,dstx);
         start = PMax(start,0);
 
-        int end = PMax(srcx,dstx+1);
+        int32_t end = PMax(srcx,dstx+1);
         end = PMin(end,pixie->width);
 
         if(end-start<=0){ return; }
 
-        unsigned char *p = pixie->buffer;
+        uint8_t *p = pixie->buffer;
         p += pixie->width * srcy + start;
 
         memset(p,pixie->color,end-start);
@@ -1636,15 +1646,15 @@ void PixieDrawLine(int srcx, int srcy, int dstx, int dsty)
     {
         if(srcx<0 || srcx>=pixie->width){ return; }
 
-        int start = PMin(srcy,dsty);
+        int32_t start = PMin(srcy,dsty);
         start = PMax(start,0);
 
-        int end = PMax(srcy,dsty+1);
+        int32_t end = PMax(srcy,dsty+1);
         end = PMin(end,pixie->height);
 
         if(end-start<=0){ return; }
 
-        for(int i=0;i<end-start;i++)
+        for(int32_t i=0;i<end-start;i++)
         { 
             pixie->buffer[(start+i)*pixie->width+srcx] = pixie->color;
         };
@@ -1652,11 +1662,11 @@ void PixieDrawLine(int srcx, int srcy, int dstx, int dsty)
         return;
     }
 
-    int dx = abs(dstx-srcx);
-    int sx = srcx<dstx ? 1 : -1;
-    int dy = abs(dsty-srcy);
-    int sy = srcy<dsty ? 1 : -1; 
-    int err = (dx>dy ? dx : -dy)/2, e2;
+    int32_t dx = abs(dstx-srcx);
+    int32_t sx = srcx<dstx ? 1 : -1;
+    int32_t dy = abs(dsty-srcy);
+    int32_t sy = srcy<dsty ? 1 : -1; 
+    int32_t err = (dx>dy ? dx : -dy)/2, e2;
  
     for(;;)
     {
@@ -1669,17 +1679,19 @@ void PixieDrawLine(int srcx, int srcy, int dstx, int dsty)
 }
 
 /**********/
-void PixieDrawTri(int ax, int ay, int bx, int by, int cx, int cy)
+void PixieDrawTri(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
 {
+    assert(pixie!=NULL);
+
     PixieDrawLine(ax,ay,bx,by);
     PixieDrawLine(bx,by,cx,cy);
     PixieDrawLine(cx,cy,ax,ay);
 }
 
 /**********/
-static void PixieDrawTriFillBotFlat(int ax, int ay, int bx, int by, int cx, int cy)
+static void PixieDrawTriFillBotFlat(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
 {
-    //note +0.55f just for round
+    assert(pixie!=NULL);
 
     float left = (float)(bx-ax)/(float)(by-ay);
     float right = (float)(cx-ax)/(float)(cy-ay);
@@ -1687,9 +1699,10 @@ static void PixieDrawTriFillBotFlat(int ax, int ay, int bx, int by, int cx, int 
     float start = (float)ax;
     float end = (float)ax;
 
-    for(int i=ay;i<=by;i++)
+    for(int32_t i=ay;i<=by;i++)
     {
-        PixieDrawLine((int)(start+0.55f),i,(int)(end+0.55f),i);
+        //note +0.55f just for round
+        PixieDrawLine((int32_t)(start+0.55f),i,(int32_t)(end+0.55f),i);
 
         start += left;
         end += right;
@@ -1697,9 +1710,9 @@ static void PixieDrawTriFillBotFlat(int ax, int ay, int bx, int by, int cx, int 
 }
 
 /**********/
-static void PixieDrawTriFillTopFlat(int ax, int ay, int bx, int by, int cx, int cy)
+static void PixieDrawTriFillTopFlat(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
 {
-    //note +0.55f just for round
+    assert(pixie!=NULL);
 
     float left = (float)(cx-ax)/(float)(cy-ay);
     float right = (float)(cx-bx)/(float)(cy-by);
@@ -1707,9 +1720,10 @@ static void PixieDrawTriFillTopFlat(int ax, int ay, int bx, int by, int cx, int 
     float start = (float)cx;
     float end = (float)cx;
 
-    for(int i=cy;i>ay;i--)
+    for(int32_t i=cy;i>ay;i--)
     {
-        PixieDrawLine((int)(start+0.55f),i,(int)(end+0.55f),i);
+        //note +0.55f just for round
+        PixieDrawLine((int32_t)(start+0.55f),i,(int32_t)(end+0.55f),i);
 
         start -= left;
         end -= right;
@@ -1717,8 +1731,10 @@ static void PixieDrawTriFillTopFlat(int ax, int ay, int bx, int by, int cx, int 
 }
 
 /**********/
-void PixieDrawTriFill(int ax, int ay, int bx, int by, int cx, int cy)
+void PixieDrawTriFill(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t cx, int32_t cy)
 {
+    assert(pixie!=NULL);
+
     //sort vertices by y
     if (ay > by){ PSwap(&ay, &by); PSwap(&ax, &bx); }
     if (ay > cy){ PSwap(&ay, &cy); PSwap(&ax, &cx); }
@@ -1734,8 +1750,8 @@ void PixieDrawTriFill(int ax, int ay, int bx, int by, int cx, int cy)
     }
     else
     {
-        int dx = (int)( (float)ax + ((float)(by - ay) / (float)(cy - ay)) * (float)(cx - ax));
-        int dy = by;
+        int32_t dx = (int32_t)( (float)ax + ((float)(by - ay) / (float)(cy - ay)) * (float)(cx - ax));
+        int32_t dy = by;
 
         PixieDrawTriFillBotFlat(ax,ay,bx,by,dx,dy);
         PixieDrawTriFillTopFlat(bx,by,dx,dy,cx,cy);
@@ -1743,9 +1759,9 @@ void PixieDrawTriFill(int ax, int ay, int bx, int by, int cx, int cy)
 }
 
 /**********/
-void PixieDrawRect(int x, int y, int w, int h)
+void PixieDrawRect(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); }
+    assert(pixie!=NULL);
 
     PixieDrawLine(    x,     y,  x+w-1,       y);
     PixieDrawLine(x+w-1,     y,  x+w-1,   y+h-1);
@@ -1755,24 +1771,24 @@ void PixieDrawRect(int x, int y, int w, int h)
 }
 
 /**********/
-void PixieDrawRectFill(int x, int y, int w, int h)
+void PixieDrawRectFill(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); }
+    assert(pixie!=NULL);
 
-    for(int i=0;i<h;i++)
+    for(int32_t i=0;i<h;i++)
     {
         PixieDrawLine(x,y+i,x+w-1,y+i);
     }
 }
 
 /**********/
-void PixieDrawCircle(int x, int y, int r)
+void PixieDrawCircle(int32_t x, int32_t y, int32_t r)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); }
+    assert(pixie!=NULL);
 
-	int offsetx = 0; 
-    int offsety = r;
-	int d = r-1;
+	int32_t offsetx = 0; 
+    int32_t offsety = r;
+	int32_t d = r-1;
 	
     while (offsety >= offsetx) 
     {
@@ -1805,13 +1821,13 @@ void PixieDrawCircle(int x, int y, int r)
 }
 
 /**********/
-void PixieDrawCircleFill(int x, int y, int r)
+void PixieDrawCircleFill(int32_t x, int32_t y, int32_t r)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); }
+    assert(pixie!=NULL);
 
-	int offsetx = 0; 
-    int offsety = r;
-	int d = r-1;
+	int32_t offsetx = 0; 
+    int32_t offsety = r;
+	int32_t d = r-1;
 	
     while (offsety >= offsetx) 
     {	
@@ -1840,27 +1856,28 @@ void PixieDrawCircleFill(int x, int y, int r)
 }
 
 /**********/
-void PixieDrawImage(unsigned char *buffer, int w, int h, int x, int y)
+void PixieDrawImage(uint8_t *buffer, int32_t w, int32_t h, int32_t x, int32_t y)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
+    assert(buffer!=NULL);
 
-    int rx = 0;
-    int ry = 0;
-    int rw = 0;
-    int rh = 0;
+    int32_t rx = 0;
+    int32_t ry = 0;
+    int32_t rw = 0;
+    int32_t rh = 0;
 
-    int res = PixieImageIntersect(x, y, w, h, 
+    int32_t res = PixieImageIntersect(x, y, w, h, 
                                     0, 0, pixie->width, pixie->height,
                                     &rx, &ry, &rw, &rh);
     if(!res) { return; }
 
-    unsigned char *src = buffer;
-    unsigned char *dst = pixie->buffer;
+    uint8_t *src = buffer;
+    uint8_t *dst = pixie->buffer;
 
     src += w*(ry-y) + (rx-x);
     dst += pixie->width*(ry) + (rx);
 
-    for(int i=0;i<rh;i++)
+    for(int32_t i=0;i<rh;i++)
     {
         memcpy(dst,src,rw);
         src += w;
@@ -1870,37 +1887,38 @@ void PixieDrawImage(unsigned char *buffer, int w, int h, int x, int y)
 }
 
 /********/
-void PixieDrawImagePart(unsigned char *buffer, int bw, int bh, int sx, int sy, int sw, int sh, int x, int y)
+void PixieDrawImagePart(uint8_t *buffer, int32_t bw, int32_t bh, int32_t sx, int32_t sy, int32_t sw, int32_t sh, int32_t x, int32_t y)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
+    assert(buffer!=NULL);
 
-    int check = 0;
+    int32_t check = 0;
 
-    int srcx = 0;
-    int srcy = 0;
-    int srcw = 0;
-    int srch = 0;
+    int32_t srcx = 0;
+    int32_t srcy = 0;
+    int32_t srcw = 0;
+    int32_t srch = 0;
     check = PixieImageIntersect(sx,sy,sw,sh,
                                     0,0,bw,bh,
                                     &srcx,&srcy,&srcw,&srch);
 
     if(!check){ return; }
 
-    int dstx = 0;
-    int dsty = 0;
-    int dstw = 0;
-    int dsth = 0;
+    int32_t dstx = 0;
+    int32_t dsty = 0;
+    int32_t dstw = 0;
+    int32_t dsth = 0;
     check = PixieImageIntersect(x,y,sw,sh,
                                     0,0,pixie->width,pixie->height,
                                     &dstx,&dsty,&dstw,&dsth);
 
     if(!check){ return; }
 
-    int size_w = PMin(srcw,dstw);
-    int size_h = PMin(srch,dsth);
+    int32_t size_w = PMin(srcw,dstw);
+    int32_t size_h = PMin(srch,dsth);
 
-    unsigned char *src = buffer;
-    unsigned char *dst = pixie->buffer;
+    uint8_t *src = buffer;
+    uint8_t *dst = pixie->buffer;
 
     src += bw*srcy + srcx;
     dst += pixie->width*dsty + dstx;
@@ -1908,7 +1926,7 @@ void PixieDrawImagePart(unsigned char *buffer, int bw, int bh, int sx, int sy, i
     if(x<0){ src += srcw - dstw; }
     if(y<0){ src += bw*(srch - dsth); }
 
-    for(int i=0;i<size_h;i++)
+    for(int32_t i=0;i<size_h;i++)
     {
         memcpy(dst,src,size_w);
 
@@ -1919,35 +1937,37 @@ void PixieDrawImagePart(unsigned char *buffer, int bw, int bh, int sx, int sy, i
 }
 
 /**********/
-void PixieDrawImageMask(unsigned char *buffer, int bw, int bh, unsigned char *mask, int mw, int mh, int x, int y, int col)
+void PixieDrawImageMask(uint8_t *buffer, int32_t bw, int32_t bh, uint8_t *mask, int32_t mw, int32_t mh, int32_t x, int32_t y, int32_t col)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
+    assert(buffer!=NULL);
+    assert(mask!=NULL);
 
-	if(bw!=mw || bh!=mh){ PixieError("[%s]: Buffers sizes mismatch\n", __func__); };
+	if(bw!=mw || bh!=mh){ PixieError("[%s]: sizes mismatch\n", __func__); };
 	
-	int rx = 0;
-    int ry = 0;
-    int rw = 0;
-    int rh = 0;
+	int32_t rx = 0;
+    int32_t ry = 0;
+    int32_t rw = 0;
+    int32_t rh = 0;
 
-    int res = PixieImageIntersect(x, y, bw, bh, 
+    int32_t res = PixieImageIntersect(x, y, bw, bh, 
                                     0, 0, pixie->width, pixie->height,
                                     &rx, &ry, &rw, &rh);
     if(!res) { return; }
 
-    unsigned char _col = col%P_NUM_COLORS;
+    uint8_t _col = col%P_NUM_COLORS;
 
-    unsigned char *src = buffer;
-    unsigned char *msk = mask;
-    unsigned char *dst = pixie->buffer;
+    uint8_t *src = buffer;
+    uint8_t *msk = mask;
+    uint8_t *dst = pixie->buffer;
 
     src += bw*(ry-y) + (rx-x);
     msk += mw*(ry-y) + (rx-x);
     dst += pixie->width*(ry) + (rx);
 
-    for(int i=0;i<rh;i++)
+    for(int32_t i=0;i<rh;i++)
     {
-        for(int j=0;j<rw;j++)
+        for(int32_t j=0;j<rw;j++)
         {
             if(msk[j]!=_col) { dst[j] = src[j]; }
         } 
@@ -1959,42 +1979,44 @@ void PixieDrawImageMask(unsigned char *buffer, int bw, int bh, unsigned char *ma
 }
 
 /**********/
-void PixieDrawImagePartMask(unsigned char *buffer, int bw, int bh, unsigned char *mask, int mw, int mh, int sx, int sy, int sw, int sh, int x, int y, int col)
+void PixieDrawImagePartMask(uint8_t *buffer, int32_t bw, int32_t bh, uint8_t *mask, int32_t mw, int32_t mh, int32_t sx, int32_t sy, int32_t sw, int32_t sh, int32_t x, int32_t y, int32_t col)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
+    assert(buffer!=NULL);
+    assert(mask!=NULL);
 
-    if(bw!=mw || bh!=mh){ PixieError("[%s]: Buffers sizes mismatch\n", __func__); };
+    if(bw!=mw || bh!=mh){ PixieError("[%s]: sizes mismatch\n", __func__); };
 
-    int check = 0;
+    int32_t check = 0;
 
-    int srcx = 0;
-    int srcy = 0;
-    int srcw = 0;
-    int srch = 0;
+    int32_t srcx = 0;
+    int32_t srcy = 0;
+    int32_t srcw = 0;
+    int32_t srch = 0;
     check = PixieImageIntersect(sx,sy,sw,sh,
                                     0,0,bw,bh,
                                     &srcx,&srcy,&srcw,&srch);
 
     if(!check){ return; }
 
-    int dstx = 0;
-    int dsty = 0;
-    int dstw = 0;
-    int dsth = 0;
+    int32_t dstx = 0;
+    int32_t dsty = 0;
+    int32_t dstw = 0;
+    int32_t dsth = 0;
     check = PixieImageIntersect(x,y,sw,sh,
                                     0,0,pixie->width,pixie->height,
                                     &dstx,&dsty,&dstw,&dsth);
 
     if(!check){ return; }
 
-    unsigned char _col = col%P_NUM_COLORS;
+    uint8_t _col = col%P_NUM_COLORS;
 
-    int size_w = PMin(srcw,dstw);
-    int size_h = PMin(srch,dsth);
+    int32_t size_w = PMin(srcw,dstw);
+    int32_t size_h = PMin(srch,dsth);
 
-    unsigned char *src = buffer;
-    unsigned char *msk = mask;
-    unsigned char *dst = pixie->buffer;
+    uint8_t *src = buffer;
+    uint8_t *msk = mask;
+    uint8_t *dst = pixie->buffer;
     
     src += bw*srcy + srcx;
     msk += mw*srcy + srcx;
@@ -2012,9 +2034,9 @@ void PixieDrawImagePartMask(unsigned char *buffer, int bw, int bh, unsigned char
         msk += bw*(srch - dsth); 
     }
 
-    for(int i=0;i<size_h;i++)
+    for(int32_t i=0;i<size_h;i++)
     {
-        for(int j=0;j<size_w;j++)
+        for(int32_t j=0;j<size_w;j++)
         {
             if(msk[j]!=_col){ dst[j]=src[j]; }
         }
@@ -2027,36 +2049,36 @@ void PixieDrawImagePartMask(unsigned char *buffer, int bw, int bh, unsigned char
 }
 
 /**********/
-void PixieDrawChar(char c, int x, int y)
+void PixieDrawChar(int8_t c, int32_t x, int32_t y)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
-	int index = (unsigned char)c;//lost my life on this cast !!!
+	int32_t index = (uint8_t)c;//lost my life on this cast !!!
 
-    if(index>=P_CHARSET_SIZE){ index = (unsigned char)P_CHARSET_UNKNOW; }
+    if(index>=P_CHARSET_SIZE){ index = (uint8_t)P_CHARSET_UNKNOW; }
 	
-	int offset = index * pixie->font_h;
+	int32_t offset = index * pixie->font_h;
 
-	unsigned char *bytes = pixie->font + offset;
+	uint8_t *bytes = pixie->font + offset;
 
-	for(int i=0;i<pixie->font_h;i++)
+	for(int32_t i=0;i<pixie->font_h;i++)
     {
-		unsigned char byte = bytes[i];
+		uint8_t byte = bytes[i];
 
-		for(int j=0;j<pixie->font_w;j++)
+		for(int32_t j=0;j<pixie->font_w;j++)
     	{
-			unsigned char val = (byte>>j) & 1;
+			uint8_t val = (byte>>j) & 1;
 
 			if(val == 0x00){ continue; }
 
-			int start_i = y+(pixie->font_scale*i);
-			int start_j = x+(pixie->font_scale*(pixie->font_w-j-1));
+			int32_t start_i = y+(pixie->font_scale*i);
+			int32_t start_j = x+(pixie->font_scale*(pixie->font_w-j-1));
 
             if(start_i>=pixie->height) { continue; }
             if(start_j>=pixie->width) { continue; }
 
-            int size_h = pixie->font_scale;
-            int size_w = pixie->font_scale; 
+            int32_t size_h = pixie->font_scale;
+            int32_t size_w = pixie->font_scale; 
 
             if(start_i<0)
             { 
@@ -2075,10 +2097,10 @@ void PixieDrawChar(char c, int x, int y)
             size_h = PMin(size_h, pixie->height-start_i);
             size_w = PMin(size_w, pixie->width-start_j);
 
-            unsigned char *p = pixie->buffer;
+            uint8_t *p = pixie->buffer;
             p += start_i*pixie->width + start_j;
 
-            for(int k=0;k<size_h;k++)
+            for(int32_t k=0;k<size_h;k++)
             {
                 memset(p,pixie->color,size_w);
 
@@ -2089,15 +2111,15 @@ void PixieDrawChar(char c, int x, int y)
     }
 }
 
-void PixieDrawString(char *s, int x, int y)
+/**********/
+void PixieDrawString(int8_t *s, int32_t x, int32_t y)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
-
-	if(s==NULL){ return; }
+    assert(pixie!=NULL);
+    assert(s!=NULL);
 
 	size_t len = strlen(s);
-	int posx = x;
-	int posy = y;
+	int32_t posx = x;
+	int32_t posy = y;
 
 	for(size_t i=0;i<len;i++)
 	{	
@@ -2112,16 +2134,18 @@ void PixieDrawString(char *s, int x, int y)
 /**********/
 /* IMAGES */
 /**********/
-void PixieImageLoad(char *file, unsigned char **buffer, int *w, int *h)
+void PixieImageLoad(int8_t *file, uint8_t **buffer, int32_t *w, int32_t *h)
 {
-    int size = 0;
-    unsigned char *buf = NULL;
+    assert(file!=NULL);
+
+    int32_t size = 0;
+    uint8_t *buf = NULL;
     
     PBufferLoad(file,&buf,&size);
 
-    unsigned char *b = buf;
+    uint8_t *b = buf;
 
-    unsigned short type = (PBufferReadByte(&b)<<8) + PBufferReadByte(&b);
+    uint16_t type = (PBufferReadByte(&b)<<8) + PBufferReadByte(&b);
 
     switch (type)
     {
@@ -2153,20 +2177,20 @@ void PixieImageLoad(char *file, unsigned char **buffer, int *w, int *h)
 }
 
 /*********/
-int PixieImageIntersect(int ax, int ay, int aw, int ah, 
-                            int bx, int by, int bw, int bh,
-                            int *rx, int *ry, int *rw, int *rh)
+int32_t PixieImageIntersect(int32_t ax, int32_t ay, int32_t aw, int32_t ah, 
+                            int32_t bx, int32_t by, int32_t bw, int32_t bh,
+                            int32_t *rx, int32_t *ry, int32_t *rw, int32_t *rh)
 {
 	
-    int _rx = 0;
-    int _ry = 0;
-    int _rw = 0;
-    int _rh = 0;
+    int32_t _rx = 0;
+    int32_t _ry = 0;
+    int32_t _rw = 0;
+    int32_t _rh = 0;
 
-    int Amin = 0;
-    int Amax = 0;
-    int Bmin = 0;
-    int Bmax = 0;
+    int32_t Amin = 0;
+    int32_t Amax = 0;
+    int32_t Bmin = 0;
+    int32_t Bmax = 0;
 
     // Horizontal intersection 
     Amin = ax;
@@ -2207,30 +2231,34 @@ int PixieImageIntersect(int ax, int ay, int aw, int ah,
 }
 
 /**********/
-int PixieImageOverlap(unsigned char *a, int ax, int ay, int aw, int ah, 
-                    unsigned char *b, int bx, int by, int bw, int bh, 
-                    int col)
+int32_t PixieImageOverlap(uint8_t *a, int32_t ax, int32_t ay, int32_t aw, int32_t ah, 
+                    uint8_t *b, int32_t bx, int32_t by, int32_t bw, int32_t bh, 
+                    int32_t col)
 {
-    int rx = 0;
-    int ry = 0;
-    int rw = 0;
-    int rh = 0;
 
-	int res = PixieImageIntersect(ax,ay,aw,ah,bx,by,bw,bh,&rx,&ry,&rw,&rh);
+    assert(a!=NULL);
+    assert(b!=NULL);
+
+    int32_t rx = 0;
+    int32_t ry = 0;
+    int32_t rw = 0;
+    int32_t rh = 0;
+
+	int32_t res = PixieImageIntersect(ax,ay,aw,ah,bx,by,bw,bh,&rx,&ry,&rw,&rh);
     
     if(res)
     {
-        unsigned char _col = col % P_NUM_COLORS;
+        uint8_t _col = col % P_NUM_COLORS;
 
-        unsigned char *_a = a;
-        unsigned char *_b = b;
+        uint8_t *_a = a;
+        uint8_t *_b = b;
 
         _a += (ry-ay)*aw + (rx-ax);
         _b += (ry-by)*bw + (rx-bx);
 
-        for(int i=0;i<rh;i++)
+        for(int32_t i=0;i<rh;i++)
         {
-            for(int j=0;j<rw;j++)
+            for(int32_t j=0;j<rw;j++)
             {
                 if(_a[j]==_col && _b[j]==_col) { return 1; }
             } 
@@ -2245,19 +2273,21 @@ int PixieImageOverlap(unsigned char *a, int ax, int ay, int aw, int ah,
 /*********/
 /* FONTS */
 /*********/
-void PixieFontLoad(char *file, unsigned char **buffer, int *size)
+void PixieFontLoad(int8_t *file, PFont *buffer, int32_t *size)
 {
+    assert(file!=NULL);
+
     PBufferLoad(file,buffer,size);
 }
 
 /**********/
-void PixieFontSet(unsigned char *buffer,int size)
+void PixieFontSet(uint8_t *buffer,int32_t size)
 {	
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
 	if(!buffer || size<256 || size%256!=0)
 	{
-		pixie->font   = (unsigned char *)P_FONT;
+		pixie->font   = (uint8_t *)P_FONT;
 		pixie->font_w = P_FONT_W;
 		pixie->font_h = P_FONT_H;
 	}
@@ -2270,38 +2300,39 @@ void PixieFontSet(unsigned char *buffer,int size)
 }
 
 /**********/
-void PixieFontSetScale(int scale)
+void PixieFontSetScale(int32_t scale)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
 
 	pixie->font_scale = (scale < 1) ? 1 : scale;
 }
 
 
 /**********/
-int PixieFontGetWidth()
+int32_t PixieFontGetWidth()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
 	return pixie->font_w*pixie->font_scale;
 }
 
 /**********/
-int PixieFontGetHeight()
+int32_t PixieFontGetHeight()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
 	return pixie->font_h*pixie->font_scale;
 }
 
 /**********/
-void PixieFontGetStringSize(char *s, int *w, int *h)
+void PixieFontGetStringSize(int8_t *s, int32_t *w, int32_t *h)
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return; }
+    assert(pixie!=NULL);
+    assert(s!=NULL);
 
-	int _w = 0;
-	int _h = 1;
-	int count = 0;
+	int32_t _w = 0;
+	int32_t _h = 1;
+	int32_t count = 0;
 
 	for (size_t i = 0; i < strlen(s); i++)
 	{
@@ -2320,13 +2351,15 @@ void PixieFontGetStringSize(char *s, int *w, int *h)
 /*********/
 /* AUDIO */
 /*********/
-void PixieAudioLoadSound(char *file, unsigned char **buffer, int *size, int *format, int *rate)
+void PixieAudioLoadSound(int8_t *file, PSound *buffer, int32_t *size, int32_t *format, int32_t *rate)
 {
-    int buf_size = 0;
-    unsigned char *buf = NULL;
+    assert(pixie!=NULL);
+
+    int32_t buf_size = 0;
+    uint8_t *buf = NULL;
     PBufferLoad(file,&buf,&buf_size);
 
-    unsigned char *b = buf;
+    uint8_t *b = buf;
 
     if(memcmp(b,"RIFF", 4)!=0){ PixieError("[%s]: file type not supported", __func__); }
     b+=4;
@@ -2339,27 +2372,27 @@ void PixieAudioLoadSound(char *file, unsigned char **buffer, int *size, int *for
     if(memcmp(b,"fmt ", 4)!=0){ PixieError("[%s]: fmt marker not found", __func__); }
     b+=4;
 
-    int comp = PBufferReadInt(&b);
+    int32_t comp = PBufferReadInt(&b);
     if(comp!=16){ PixieError("[%s]: compressed data not supported", __func__); }
 
-    short pcm = PBufferReadShort(&b);
+    int16_t pcm = PBufferReadShort(&b);
     if(pcm!=1){ PixieError("[%s]: file not in pcm format", __func__); }
 
-    int _channels = (int)PBufferReadShort(&b);
+    int32_t _channels = (int32_t)PBufferReadShort(&b);
     
-    int _sample_rate = PBufferReadInt(&b);
+    int32_t _sample_rate = PBufferReadInt(&b);
 
     b+=4;//block align, not used
     b+=2;//byte rate, not used
 
-    int _bps = (int)PBufferReadShort(&b);
+    int32_t _bps = (int32_t)PBufferReadShort(&b);
 
     //read until we get "data" chunk or buf is exausted
     while(memcmp(b,"data", 4)!=0)
     {
         b+=4;
 
-        int off = PBufferReadInt(&b);
+        int32_t off = PBufferReadInt(&b);
 
         b+=off;
         
@@ -2368,13 +2401,13 @@ void PixieAudioLoadSound(char *file, unsigned char **buffer, int *size, int *for
 
     b+=4;
 
-    int _size = PBufferReadInt(&b);
+    int32_t _size = PBufferReadInt(&b);
     if(_size<=0){ PixieError("[%s]: error getting data size", __func__); }
 
-    *buffer = PAlloc(_size,sizeof(unsigned char));
+    *buffer = PAlloc(_size,sizeof(uint8_t));
     memcpy(*buffer,b,_size);
     
-    int _format = 0;
+    int32_t _format = 0;
     if(_channels==1 && _bps==8){ _format = AL_FORMAT_MONO8; }
     else if(_channels==1 && _bps==16){ _format = AL_FORMAT_MONO16; }
     else if(_channels==2 && _bps==8){ _format = AL_FORMAT_STEREO8; }
@@ -2389,106 +2422,154 @@ void PixieAudioLoadSound(char *file, unsigned char **buffer, int *size, int *for
 }
 
 /**********/
-void PixieAudioPlaySound(unsigned char *buffer, int size, int format, int sample_rate)
+void PixieAudioPlaySound(uint8_t *buffer, int32_t size, int32_t format, int32_t rate)
 {
-    int status = 0;
+    assert(pixie!=NULL);
+    assert(buffer!=NULL);
+    assert(size>0);
+    assert(format==AL_FORMAT_MONO8 || format==AL_FORMAT_MONO16 || format==AL_FORMAT_STEREO8 || format==AL_FORMAT_STEREO16);
+    assert(rate>0);
+
+    int32_t status = 0;
 
     alGetSourcei(pixie->asrc_snd,AL_SOURCE_STATE,&status);
-    
+    PixieOpenalCheckError();
+
     if(status==AL_PLAYING) { return; }
 
     alDeleteBuffers(1, &pixie->asnd);
+    PixieOpenalCheckError();
 
     alGenBuffers(1, &pixie->asnd);
+    PixieOpenalCheckError();
 
-    alBufferData(pixie->asnd, format, buffer, size, sample_rate);
+    alBufferData(pixie->asnd, format, buffer, size, rate);
+    PixieOpenalCheckError();
 
     alSourcei(pixie->asrc_snd, AL_BUFFER, pixie->asnd);
+    PixieOpenalCheckError();
 
     alSourcePlay(pixie->asrc_snd);
+    PixieOpenalCheckError();
 }
 
 /**********/
-void PixieAudioLoopSound(unsigned char *buffer, int size, int format, int sample_rate)
+void PixieAudioLoopSound(uint8_t *buffer, int32_t size, int32_t format, int32_t rate)
 {
-    int status = 0;
+    assert(pixie!=NULL);
+    assert(buffer!=NULL);
+    assert(size>0);
+    assert(format==AL_FORMAT_MONO8 || format==AL_FORMAT_MONO16 || format==AL_FORMAT_STEREO8 || format==AL_FORMAT_STEREO16);
+    assert(rate>0);
+
+    int32_t status = 0;
 
     alGetSourcei(pixie->asrc_snd,AL_SOURCE_STATE,&status);
-    
+    PixieOpenalCheckError();
+
     if(status==AL_PLAYING) { return; }
 
     alDeleteBuffers(1, &pixie->asnd);
+    PixieOpenalCheckError();
 
     alGenBuffers(1, &pixie->asnd);
+    PixieOpenalCheckError();
 
-    alBufferData(pixie->asnd, format, buffer, size, sample_rate);
+    alBufferData(pixie->asnd, format, buffer, size, rate);
+    PixieOpenalCheckError();
 
     alSourcei(pixie->asrc_snd, AL_BUFFER, pixie->asnd);
+    PixieOpenalCheckError();
 
     alSourcei(pixie->asrc_snd, AL_LOOPING, 1);
+    PixieOpenalCheckError();
 
     alSourcePlay(pixie->asrc_snd);
+    PixieOpenalCheckError();
 }
 
 /**********/
 void PixieAudioStopSound()
 {
-    int status = 0;
+    assert(pixie!=NULL);
+
+    int32_t status = 0;
 
     alGetSourcei(pixie->asrc_snd,AL_SOURCE_STATE,&status);
+    PixieOpenalCheckError();
 
     if(status==AL_PLAYING) 
     { 
         alSourceStop(pixie->asrc_snd); 
+        PixieOpenalCheckError();
+
         alSourcei(pixie->asrc_snd, AL_LOOPING, 0);
+        PixieOpenalCheckError();
     }
 }
 
 /**********/
-void PixieAudioPlayTone(int tone)
+void PixieAudioPlayTone(int32_t tone)
 { 
-    int status = 0;
+    assert(pixie!=NULL);
+
+    int32_t status = 0;
 
     alGetSourcei(pixie->asrc_tone,AL_SOURCE_STATE,&status);
-    
+    PixieOpenalCheckError();
+
     if(status==AL_PLAYING) { return; }
 
-    int _tone = tone % P_NUM_TONES;
+    int32_t _tone = tone % P_NUM_TONES;
 
     alSourcei(pixie->asrc_tone, AL_BUFFER, pixie->atones[_tone]);
+    PixieOpenalCheckError();
 
     alSourcei(pixie->asrc_tone, AL_LOOPING, 1);
+    PixieOpenalCheckError();
 
     alSourcePlay(pixie->asrc_tone);
+    PixieOpenalCheckError();
 }
 
 /**********/
 void PixieAudioStopTone()
 {
-    int status = 0;
+    assert(pixie!=NULL);
+
+    int32_t status = 0;
 
     alGetSourcei(pixie->asrc_tone,AL_SOURCE_STATE,&status);
+    PixieOpenalCheckError();
 
     if(status==AL_PLAYING) 
     { 
         alSourceStop(pixie->asrc_tone); 
+        PixieOpenalCheckError();
+
         alSourcei(pixie->asrc_tone, AL_LOOPING, 0);
+        PixieOpenalCheckError();
     }
 }
 
 /**********/
 void PixieAudioSetVolume(float vol)
 {
+    assert(pixie!=NULL);
+
     alSourcef(pixie->asrc_snd, AL_GAIN, vol);
+    PixieOpenalCheckError();
+
     alSourcef(pixie->asrc_tone, AL_GAIN, vol);
+    PixieOpenalCheckError();
 }
 
 /********/
 /* TIME */
 /********/
-int PixieTimeGet()
+int32_t PixieTimeGet()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     LARGE_INTEGER t = {0};
     LONGLONG elapsed = 0;
@@ -2499,15 +2580,15 @@ int PixieTimeGet()
 
     double val = (double)elapsed * 1000.0f / (double)pixie->freq.QuadPart;
 
-    return (int)val;
+    return (int32_t)val;
 }
 
 /**********/
 float PixieTimeGetDelta()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
-    
-    int t = PixieTimeGet();
+    assert(pixie!=NULL);
+
+    int32_t t = PixieTimeGet();
 
 	float val = ( t - pixie->delta )/1000.0f;
 
@@ -2519,9 +2600,9 @@ float PixieTimeGetDelta()
 /**********/
 /* EVENTS */
 /**********/
-int PixieEventAvailable()
+int32_t PixieEventAvailable()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     MSG msg = {0};
 
@@ -2535,35 +2616,35 @@ int PixieEventAvailable()
 }
 
 /**********/
-int PixieEventGetType()
+int32_t PixieEventGetType()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     return pixie->event;
 }
 
 /**********/
-int PixieEventGetKey()
+int32_t PixieEventGetKey()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     return pixie->key;
 }
 
 /**********/
-int PixieEventGetAsciiKey()
+int32_t PixieEventGetAsciiKey()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     return pixie->ascii_key;
 }
 
 /**********/
-int PixieEventGetMouseX()
+int32_t PixieEventGetMouseX()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
-	int val = pixie->mousex -(pixie->client_w-pixie->viewport_w)/2;
+	int32_t val = pixie->mousex -(pixie->client_w-pixie->viewport_w)/2;
 	
 	val = PMap(val,0,pixie->viewport_w,0,pixie->width);
 
@@ -2575,11 +2656,11 @@ int PixieEventGetMouseX()
 }
 
 /**********/
-int PixieEventGetMouseY()
+int32_t PixieEventGetMouseY()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
-	int val = pixie->mousey -(pixie->client_h-pixie->viewport_h)/2;
+	int32_t val = pixie->mousey -(pixie->client_h-pixie->viewport_h)/2;
 	
 	val = PMap(val,0,pixie->viewport_h,0,pixie->height);
 
@@ -2591,17 +2672,17 @@ int PixieEventGetMouseY()
 }
 
 /**********/
-int PixieEventGetMouseButton()
+int32_t PixieEventGetMouseButton()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     return pixie->button;
 }
 
 /**********/
-int PixieEventGetWheelDir()
+int32_t PixieEventGetWheelDir()
 {
-    if(!pixie) { PixieError("[%s]: PIXIE not initialized", __func__); return 0; }
+    assert(pixie!=NULL);
 
     return (pixie->wheel_dir>0) ? P_WHEEL_UP : P_WHEEL_DOWN;
 }

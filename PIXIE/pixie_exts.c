@@ -3,6 +3,7 @@
 /***********/
 //std
 #include "stdlib.h"
+#include "stdint.h"
 
 //math
 #include "math.h"
@@ -143,7 +144,7 @@ void PVec3fxPMat4f(PVec3f v, float *m, PVec3f *rv)
 
 	float rvector[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	for (int i = 0; i < 16; i++)
+	for (int32_t i = 0; i < 16; i++)
 	{
 		rvector[i/4] += m[i] * vector[i % 4];
 	}
@@ -158,7 +159,7 @@ void PVec3fxPMat4f(PVec3f v, float *m, PVec3f *rv)
 /**********/
 void PMat4fInit(PMat4f m)
 {
-	for(int i=0;i<16;i++){ m[i] = 0.0f; }
+	for(int32_t i=0;i<16;i++){ m[i] = 0.0f; }
 
 	m[0] = 1.0f;
 	m[5] = 1.0f;
@@ -185,18 +186,18 @@ void PMat4fTranspose(PMat4f m, PMat4f rm)
 {
 	PMat4f mat = {0};
 
-	int dest = 0;
+	int32_t dest = 0;
 
-	for (int i = 0; i < 4; i++) 
+	for (int32_t i = 0; i < 4; i++) 
 	{
-		for (int j = 0; j < 4; j++) 
+		for (int32_t j = 0; j < 4; j++) 
 		{
 			mat[dest] = m[j * 4 + i];
 			dest++;
 		}
 	}
 
-	for (int i = 0; i < 16; i++)
+	for (int32_t i = 0; i < 16; i++)
 	{
 		rm[i] = mat[i];
 	}
@@ -298,13 +299,13 @@ void PMat4fxPMat4f(PMat4f m, PMat4f mul, PMat4f rm)
 {
 	PMat4f mat = {0};
 
-	for (int i = 0; i < 4; i++)
+	for (int32_t i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (int32_t j = 0; j < 4; j++)
 		{
 			mat[i * 4 + j] = 0.0f;
 
-			for (int k = 0; k < 4; k++)
+			for (int32_t k = 0; k < 4; k++)
 			{
 				mat[i * 4 + j] += m[i * 4 + k] * mul[k * 4 + j];
 			}
@@ -312,7 +313,7 @@ void PMat4fxPMat4f(PMat4f m, PMat4f mul, PMat4f rm)
 		}
 	}
 
-	for (int i = 0; i < 16; i++)
+	for (int32_t i = 0; i < 16; i++)
 	{
 		rm[i] = mat[i];
 	}
@@ -343,7 +344,7 @@ void PTriangleClose(PTriangle *t)
 /********/
 /* PSTL */
 /********/
-static int PStlSorter(void *elem_a, void *elem_b)
+static int32_t PStlSorter(void *elem_a, void *elem_b)
 {
 	PTriangle *t0 = *(PTriangle **)elem_a;
    	PTriangle *t1 = *(PTriangle **)elem_b;
@@ -358,7 +359,7 @@ static int PStlSorter(void *elem_a, void *elem_b)
 }
 
 /**********/
-void PStlLoad(char *file, PStl *stl)
+void PStlLoad(int8_t *file, PStl *stl)
 {
 	stl->data = PAlloc(1,sizeof(PArray));
 	PArrayInit(stl->data);
@@ -366,15 +367,15 @@ void PStlLoad(char *file, PStl *stl)
 	stl->proj = PAlloc(1,sizeof(PArray));
 	PArrayInit(stl->proj);
 
-	unsigned char *buffer = NULL;
+	uint8_t *buffer = NULL;
 
 	PBufferLoad(file,&buffer,NULL);
 
-	unsigned char *buf = buffer + 0x50;//skip header
+	uint8_t *buf = buffer + 0x50;//skip header
 
-	unsigned int count = PBufferReadInt(&buf);
+	uint32_t count = PBufferReadInt(&buf);
 
-	for(unsigned int i=0;i<count;i++)
+	for(uint32_t i=0;i<count;i++)
 	{
 		PVec3f normal = {0};
 		normal.x = PBufferReadFloat(&buf);
@@ -452,8 +453,8 @@ void PStlDrawWireframe(PStl *stl, Drawer func)
 
     PMat4fScale(mat,stl->scale,mat);
 
-	int count = 0;
-	for(int i=0;i<((PArray*)stl->data)->elems_count;i++)
+	int32_t count = 0;
+	for(int32_t i=0;i<((PArray*)stl->data)->elems_count;i++)
 	{
 		PTriangle *t = PArrayGet(((PArray*)stl->data),i);
 		
@@ -488,8 +489,8 @@ void PStlDrawSolid(PStl *stl, Drawer func)
     PMat4fScale(mat,stl->scale,mat);
 
 	//retrieve drawable triangles
-	int count = 0;
-	for(int i=0;i<((PArray*)stl->data)->elems_count;i++)
+	int32_t count = 0;
+	for(int32_t i=0;i<((PArray*)stl->data)->elems_count;i++)
 	{
 		PVec3f normal = {0};
 
