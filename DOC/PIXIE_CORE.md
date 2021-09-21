@@ -1,7 +1,5 @@
 
----
-## DATA TYPES
----
+# DATA TYPES
 
 #### PImage
 
@@ -16,8 +14,7 @@
 > puntatore a bytes contenenti i dati di un suono
 
 ---
-## CORE
----
+# CORE
 
 #### void PixieDebug()
 
@@ -57,8 +54,7 @@
 > Abilita/disabilita il Vsync (default off)
 
 ---
-## RENDER
----
+# RENDER
 
 #### void PixieRenderClear(int col)
 
@@ -89,8 +85,7 @@
 >  Restituisce l'altezza in pixels della superfcie disegnabile
 
 ---
-## COLOR AND PALETTE
----
+# COLOR AND PALETTE
 
 #### void PixieColorSet(int col)
 
@@ -99,8 +94,7 @@
 #### void PixiePaletteSet(int pal)
 
 ---
-## DRAWING
----
+# DRAWING
 
 #### void PixieDrawPoint(int x, int y)
 
@@ -163,8 +157,7 @@
 #### void PixieDrawString(char *s, int x, int y)
 
 ---
-## IMAGES
----
+# IMAGES
 
 #### void PixieImageLoad(char *file, PImage *buffer, int *w, int *h)
 
@@ -177,8 +170,7 @@
 #### int PixieImageOverlap(PImage a, int ax, int ay, int aw, int ah, PImage b, int bx, int by, int bw, int bh, int col)
 
 ---
-## FONTS
----
+# FONTS
 
 #### void PixieFontLoad(char *file, PFont *buffer, int *size)
 
@@ -203,8 +195,7 @@
 #### void PixieFontGetStringSize(char *s, int *w, int *h)
 
 ---
-## AUDIO
----
+# AUDIO
 
 #### void PixieAudioLoadSound(char *file,  PSound *buffer, int *size, int *format, int *rate)
 
@@ -233,8 +224,7 @@
 #### void PixieAudioSetVolume(float vol)
 
 ---
-## TIME
----
+# TIME
 
 #### int PixieTimeGet()
 
@@ -243,8 +233,7 @@
 #### float PixieTimeGetDelta()
 
 ---
-## EVENTS
----
+# EVENTS
 
 #### int PixieEventAvailable()
 
@@ -278,7 +267,6 @@
 
 ---
 # DEFINES
----
 
 #### COLORS
 
