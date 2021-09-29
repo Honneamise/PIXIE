@@ -2093,7 +2093,7 @@ void PixieDrawChar(char c, int32_t x, int32_t y)
 {
     assert(pixie!=NULL);
 
-	int32_t index = (uint8_t)c;//lost my life on this cast !!!
+	uint8_t index = (uint8_t)c;//lost my life on this cast !!!
 
     if(index>=P_CHARSET_SIZE){ index = (uint8_t)P_CHARSET_UNKNOW; }
 	
@@ -2691,8 +2691,6 @@ int32_t PixieEventGetMouseX()
 	val = PClamp(val, 0, pixie->width-1);
 
 	return val;
-
-    return pixie->mousex;
 }
 
 /**********/
@@ -2707,8 +2705,6 @@ int32_t PixieEventGetMouseY()
 	val = PClamp(val, 0, pixie->height-1);
 
 	return val;
-
-    return pixie->mousey;
 }
 
 /**********/
