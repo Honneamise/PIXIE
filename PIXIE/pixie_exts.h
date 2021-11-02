@@ -41,64 +41,35 @@ PVec3f 	PVec3fNormalize(PVec3f v);
 float 	PVec3fLen(PVec3f v);
 float 	PVec3fDot(PVec3f v, PVec3f s);
 PVec3f 	PVec3fCross(PVec3f v, PVec3f s);
-void 	PVec3fxPMat4f(PVec3f v, float *m, PVec3f *rv);
 
-/**********/
-/* PMAT4F */
-/**********/
-typedef float PMat4f[16];
-
-void PMat4fInit(PMat4f m);
-void PMat4fScale(PMat4f m, float scale, PMat4f rm);
-void PMat4fTranspose(PMat4f m, PMat4f rm);
-void PMat4fTranslateX(PMat4f m, float pos, PMat4f rm);
-void PMat4fTranslateY(PMat4f m, float pos, PMat4f rm);
-void PMat4fTranslateZ(PMat4f m, float pos, PMat4f rm);
-void PMat4fRotateX(PMat4f m, float degree, PMat4f rm);
-void PMat4fRotateY(PMat4f m, float degree, PMat4f rm);
-void PMat4fRotateZ(PMat4f m, float degree, PMat4f rm);
-void PMat4fxPMat4f(PMat4f m, PMat4f mul, PMat4f rm);
-
-/*************/
-/* PTRIANGLE */
-/*************/
-typedef struct PTriangle
+/*********/
+/* PMATF */
+/*********/
+typedef struct PMatf
 {
-	PVec3f normal;
-	PVec3f a;
-	PVec3f b;
-	PVec3f c;
+    int32_t rows;
+    int32_t cols;
+    
+    float *data;
 
-} PTriangle;
+} PMatf;
 
-/********/
-/* PSTL */
-/********/
-typedef struct PStl
-{
-	float posx;
-	float posy;
-	float posz;
 
-	float rotx;
-	float roty;
-	float rotz;
+PMatf PMatfInit(int32_t rows, int32_t cols, float *data);
+void PMatfClose(PMatf *mat);
 
-	float scale;
+void PMatfSet(PMatf mat, int32_t row, int32_t col, float val);
+float PMatfGet(PMatf mat, int32_t row, int32_t col);
 
-	void *data;
-	void *proj;
+void PMatfAdd(PMatf a, PMatf b, PMatf *c);
+void PMatfSub(PMatf a, PMatf b, PMatf *c);
+void PMatfMul(PMatf a, PMatf b, PMatf *c);
 
-} PStl;
+void PMatfAddScalar(PMatf mat, float num);
+void PMatfSubScalar(PMatf mat, float num);
+void PMatfMulScalar(PMatf mat, float num);
+void PMatfDivScalar(PMatf mat, float num);
 
-typedef void (*Drawer)(void *elem);
-
-void PStlLoad(char *file, PStl *stl);
-
-void PStlClose(PStl *stl);
-
-void PStlDrawWireframe(PStl *stl, Drawer func);
-
-void PStlDrawSolid(PStl *stl, Drawer func);
+void PMatTranspose(PMatf mat, PMatf *res);
 
 #endif

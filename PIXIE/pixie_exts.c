@@ -138,413 +138,192 @@ PVec3f PVec3fCross(PVec3f v, PVec3f s)
 	return (PVec3f){ (v.y*s.z - v.z*s.y), (v.z*s.x - v.x*s.z), (v.x*s.y - v.y*s.x) };
 }
 
+
 /**********/
-void PVec3fxPMat4f(PVec3f v, float *m, PVec3f *rv)
+/* PMATF */
+/**********/
+PMatf PMatfInit(int32_t rows, int32_t cols, float *data)
 {
-	assert(m!=NULL && rv!=NULL);
+    assert(rows>0 && cols>0);
 
-	float vector[4] = { v.x, v.y, v.z, 1.0f };
+    PMatf mat = { rows, cols, NULL};
 
-	float rvector[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    mat.data = PAlloc(rows*cols,sizeof(float));
 
-	for (int32_t i = 0; i < 16; i++)
+    if(data!=NULL)
+    {
+        for(int32_t i=0;i<rows*cols;i++)
+        {
+            mat.data[i] = data[i];
+        }
+    }
+
+    return mat;
+}
+
+/**********/
+void PMatfClose(PMatf *mat)
+{
+    assert(mat!=NULL);
+
+    mat->rows = 0;
+    mat->cols = 0;
+
+    PFree(mat->data);
+    mat->data = NULL;
+}
+
+/**********/
+void PMatfSet(PMatf mat, int32_t row, int32_t col, float val)
+{
+    assert(mat.data!=NULL && row<mat.rows && col<mat.cols);
+
+    int32_t index = row*mat.cols + col;
+
+    mat.data[index] = val;
+}
+
+/**********/
+float PMatfGet(PMatf mat, int32_t row, int32_t col)
+{
+    assert(mat.data!=NULL && row<mat.rows && col<mat.cols);
+
+    int32_t index = row*mat.cols + col;
+
+    return mat.data[index];
+}
+
+/**********/
+void PMatfAdd(PMatf a, PMatf b, PMatf *c)
+{
+    assert(a.rows==b.rows && a.cols==b.cols && a.data!=NULL && b.data!=NULL);
+
+    PMatf mat = PMatfInit(a.rows,a.cols,NULL);
+    
+    for(int32_t k=0;k<mat.rows*mat.cols;k++)
+    {
+        mat.data[k] = a.data[k] + b.data[k];
+    }
+
+    c->rows = mat.rows;
+    c->cols = mat.cols;
+    PFree(c->data);
+    c->data = mat.data;
+}
+
+/**********/
+void QMatSub(PMatf a, PMatf b, PMatf *c)
+{
+    assert(a.rows==b.rows && a.cols==b.cols && a.data!=NULL && b.data!=NULL);
+
+    PMatf mat = PMatfInit(a.rows,a.cols,NULL);
+    
+    for(int32_t k=0;k<mat.rows*mat.cols;k++)
+    {
+        mat.data[k] = a.data[k] - b.data[k];
+    }
+
+    c->rows = mat.rows;
+    c->cols = mat.cols;
+    PFree(c->data);
+    c->data = mat.data;
+}
+
+/**********/
+void PMatfMul(PMatf a, PMatf b, PMatf *c)
+{
+    assert(a.data!=NULL && b.data!=NULL && a.cols==b.rows);
+    
+    PMatf mat = PMatfInit(a.rows,b.cols,NULL);
+
+    for(int32_t i=0;i<a.rows;i++)
+    {
+        for(int32_t j=0;j<b.cols;j++)
+        {
+            float sum = 0.0f;
+
+            for(int32_t k=0;k<a.cols;k++)
+            {
+                float p = a.data[i*a.cols+k] * b.data[k*b.cols+j];
+                sum += p;
+            }
+
+            mat.data[i*mat.cols+j] = sum;
+        }
+    }
+
+    c->rows = mat.rows;
+    c->cols = mat.cols;
+    PFree(c->data);
+    c->data = mat.data;
+}
+
+/**********/
+void PMatfAddScalar(PMatf mat, float num)
+{
+    assert(mat.rows>0 && mat.cols>0 && mat.data!=NULL);
+
+    for(int32_t k=0;k<mat.rows*mat.cols;k++)
+    {
+        mat.data[k] = mat.data[k] + num;
+    }
+
+}
+
+/**********/
+void PMatfSubScalar(PMatf mat, float num)
+{
+    assert(mat.rows>0 && mat.cols>0 && mat.data!=NULL);
+
+    for(int32_t k=0;k<mat.rows*mat.cols;k++)
+    {
+        mat.data[k] = mat.data[k] - num;
+    }
+
+}
+
+/**********/
+void PMatfMulScalar(PMatf mat, float num)
+{
+    assert(mat.rows>0 && mat.cols>0 && mat.data!=NULL);
+
+    for(int32_t k=0;k<mat.rows*mat.cols;k++)
+    {
+        mat.data[k] = mat.data[k] * num;
+    }
+
+}
+
+/**********/
+void PMatfDivScalar(PMatf mat, float num)
+{
+    assert(mat.rows>0 && mat.cols>0 && mat.data!=NULL);
+
+    for(int32_t k=0;k<mat.rows*mat.cols;k++)
+    {
+        mat.data[k] = mat.data[k] / num;
+    }
+
+}
+
+/**********/
+void PMatTranspose(PMatf mat, PMatf *res)
+{
+    PMatf m = PMatfInit(mat.cols,mat.rows,NULL);
+
+    int32_t count = 0;
+
+	for (int32_t i=0;i<mat.cols; i++) 
 	{
-		rvector[i/4] += m[i] * vector[i % 4];
-	}
-
-	rv->x = rvector[0];
-	rv->y = rvector[1];
-	rv->z = rvector[2];
-}
-
-/**********/
-/* PMAT4F */
-/**********/
-void PMat4fInit(PMat4f m)
-{
-	assert(m!=NULL);
-
-	for(int32_t i=0;i<16;i++){ m[i] = 0.0f; }
-
-	m[0] = 1.0f;
-	m[5] = 1.0f;
-	m[10] = 1.0f;
-	m[15] = 1.0f;
-}
-
-/**********/
-void PMat4fScale(PMat4f m, float scale, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[0] = scale;
-	mat[5] = scale;
-	mat[10] = scale;
-
-	PMat4fxPMat4f(m, mat, rm);
-}
-
-/**********/
-void PMat4fTranspose(PMat4f m, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	PMat4f mat = {0};
-
-	int32_t dest = 0;
-
-	for (int32_t i = 0; i < 4; i++) 
-	{
-		for (int32_t j = 0; j < 4; j++) 
+		for (int32_t j=0;j<mat.rows; j++) 
 		{
-			mat[dest] = m[j * 4 + i];
-			dest++;
+			m.data[count] = mat.data[j*mat.cols + i];
+			count++;
 		}
 	}
 
-	for (int32_t i = 0; i < 16; i++)
-	{
-		rm[i] = mat[i];
-	}
-}
-
-/**********/
-void PMat4fTranslateX(PMat4f m, float pos, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[3] = pos;
-
-	PMat4fxPMat4f(m, mat, rm);
-
-}
-
-/**********/
-void PMat4fTranslateY(PMat4f m, float pos, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[7] = pos;
-
-	PMat4fxPMat4f(m, mat, rm);
-}
-
-/**********/
-void PMat4fTranslateZ(PMat4f m, float pos, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[11] = pos;
-
-	PMat4fxPMat4f(m, mat, rm);
-}
-
-/**********/
-void PMat4fRotateX(PMat4f m, float degree, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	float radians = (float)(degree * M_PI / 180.0f);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[5] = cosf(radians);
-	mat[6] = -sinf(radians);
-	mat[9] = sinf(radians);
-	mat[10] = cosf(radians);
-
-	PMat4fxPMat4f(m, mat, rm);
-
-}
-
-/**********/
-void PMat4fRotateY(PMat4f m, float degree, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	float radians = (float)(degree * M_PI / 180.0f);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[0] = cosf(radians);
-	mat[2] = sinf(radians);
-	mat[8] = -sinf(radians);
-	mat[10] = cosf(radians);
-
-	PMat4fxPMat4f(m, mat, rm);
-
-}
-
-/**********/
-void PMat4fRotateZ(PMat4f m, float degree, PMat4f rm)
-{
-	assert(m!=NULL && rm!=NULL);
-
-	float radians = (float)(degree * M_PI / 180.0f);
-
-	PMat4f mat = {0};
-
-	PMat4fInit(mat);
-
-	mat[0] = cosf(radians);
-	mat[1] = -sinf(radians);
-	mat[4] = sinf(radians);
-	mat[5] = cosf(radians);
-
-	PMat4fxPMat4f(m, mat, rm);
-
-}
-
-/**********/
-void PMat4fxPMat4f(PMat4f m, PMat4f mul, PMat4f rm)
-{
-	assert(m!=NULL && mul!=NULL && rm!=NULL);
-
-	PMat4f mat = {0};
-
-	for (int32_t i = 0; i < 4; i++)
-	{
-		for (int32_t j = 0; j < 4; j++)
-		{
-			mat[i * 4 + j] = 0.0f;
-
-			for (int32_t k = 0; k < 4; k++)
-			{
-				mat[i * 4 + j] += m[i * 4 + k] * mul[k * 4 + j];
-			}
-
-		}
-	}
-
-	for (int32_t i = 0; i < 16; i++)
-	{
-		rm[i] = mat[i];
-	}
-
-}
-
-/*************/
-/* PTRIANGLE */
-/*************/
-PTriangle *PTriangleInit(PVec3f a, PVec3f b, PVec3f c)
-{
-	PTriangle *t = PAlloc(1, sizeof(PTriangle));
-
-	t->normal = (PVec3f){ 0.0f, 0.0f, 0.0f };
-	t->a = a;
-	t->b = b;
-	t->c = c;
-
-	return t;
-}
-
-/**********/
-void PTriangleClose(PTriangle *t)
-{
-	PFree(t);
-}
-
-/********/
-/* PSTL */
-/********/
-static int32_t PStlSorter(void *elem_a, void *elem_b)
-{
-	assert(elem_a!=NULL && elem_b!=NULL);
-
-	PTriangle *t0 = *(PTriangle **)elem_a;
-   	PTriangle *t1 = *(PTriangle **)elem_b;
-		
-	float z0 = (t0->a.z + t0->b.z + t0->c.z)/3.0f;
-	float z1 = (t1->a.z + t1->b.z + t1->c.z)/3.0f;
-
-	if (z0 < z1) return -1;
-    if (z0 > z1) return +1;
-
-    return 0;
-}
-
-/**********/
-void PStlLoad(char *file, PStl *stl)
-{
-	assert(file!=NULL);
-
-	stl->data = PAlloc(1,sizeof(PArray));
-	PArrayInit(stl->data);
-
-	stl->proj = PAlloc(1,sizeof(PArray));
-	PArrayInit(stl->proj);
-
-	uint8_t *buffer = NULL;
-
-	PBufferLoad(file,&buffer,NULL);
-
-	uint8_t *buf = buffer + 0x50;//skip header
-
-	uint32_t count = PBufferReadInt(&buf);
-
-	for(uint32_t i=0;i<count;i++)
-	{
-		PVec3f normal = {0};
-		normal.x = PBufferReadFloat(&buf);
-		normal.y = PBufferReadFloat(&buf);
-		normal.z = PBufferReadFloat(&buf);
-
-		PVec3f a = {0};
-		a.x = PBufferReadFloat(&buf);
-		a.y = PBufferReadFloat(&buf);
-		a.z = PBufferReadFloat(&buf);
-
-		PVec3f b = {0};
-		b.x = PBufferReadFloat(&buf);
-		b.y = PBufferReadFloat(&buf);
-		b.z = PBufferReadFloat(&buf);
-
-		PVec3f c = {0};
-		c.x = PBufferReadFloat(&buf);
-		c.y = PBufferReadFloat(&buf);
-		c.z = PBufferReadFloat(&buf);
-
-		buf+=2;//short attrib value,not used
-
-		PTriangle *t = PAlloc(1,sizeof(PTriangle));
-		t->normal = normal;
-		t->a = a;
-		t->b = b;
-		t->c = c;
-
-		PArrayAdd(stl->data, t);
-
-		PArrayAdd(stl->proj, PAlloc(1,sizeof(PTriangle)));
-	}
-
-	PFree(buffer);
-}
-
-/**********/
-void PStlClose(PStl *stl)
-{
-	assert(stl!=NULL);
-
-	stl->posx = 0.0f;
-	stl->posy = 0.0f;
-	stl->posz = 0.0f;
-
-	stl->rotx = 0.0f;
-	stl->roty = 0.0f;
-	stl->rotz = 0.0f;
-
-	stl->scale = 0.0f;
-
-	((PArray*)stl->proj)->elems_count = ((PArray*)stl->data)->elems_count;
-	
-	PArrayClose(((PArray*)stl->proj),PFree);
-
-	PArrayClose(((PArray*)stl->data),PFree);
-
-	PFree(stl->proj);
-	PFree(stl->data);
-}
-
-
-/**********/
-void PStlDrawWireframe(PStl *stl, Drawer func)
-{
-	assert(stl!=NULL && func!=NULL);
-
-	PMat4f mat = {0};
-	PMat4fInit(mat);
-
-    PMat4fTranslateX(mat,stl->posx,mat);
-    PMat4fTranslateY(mat,stl->posy,mat);
-	PMat4fTranslateZ(mat,stl->posz,mat);
-
-    PMat4fRotateX(mat,stl->rotx,mat);
-    PMat4fRotateY(mat,stl->roty,mat); 
-    PMat4fRotateZ(mat,stl->rotz,mat);          
-
-    PMat4fScale(mat,stl->scale,mat);
-
-	int32_t count = 0;
-	for(int32_t i=0;i<((PArray*)stl->data)->elems_count;i++)
-	{
-		PTriangle *t = PArrayGet(((PArray*)stl->data),i);
-		
-		PTriangle *_t = ((PArray*)stl->proj)->elems[count];
-
-		PVec3fxPMat4f(t->a,mat,&_t->a);
-		PVec3fxPMat4f(t->b,mat,&_t->b);
-		PVec3fxPMat4f(t->c,mat,&_t->c);
-
-		count++;
-	}
-
-	((PArray*)stl->proj)->elems_count = count; //DANGER !!!
-	
-	PArrayPerform(((PArray*)stl->proj), func);
-}
-
-/**********/
-void PStlDrawSolid(PStl *stl, Drawer func)
-{
-	assert(stl!=NULL && func!=NULL);
-
-	PMat4f mat = {0};
-	PMat4fInit(mat);
-
-    PMat4fTranslateX(mat,stl->posx,mat);
-    PMat4fTranslateY(mat,stl->posy,mat);
-	PMat4fTranslateZ(mat,stl->posz,mat);
-
-    PMat4fRotateX(mat,stl->rotx,mat);
-    PMat4fRotateY(mat,stl->roty,mat); 
-    PMat4fRotateZ(mat,stl->rotz,mat);          
-
-    PMat4fScale(mat,stl->scale,mat);
-
-	//retrieve drawable triangles
-	int32_t count = 0;
-	for(int32_t i=0;i<((PArray*)stl->data)->elems_count;i++)
-	{
-		PVec3f normal = {0};
-
-		PTriangle *t = PArrayGet(((PArray*)stl->data),i);
-		
-		PVec3fxPMat4f(t->normal,mat,&normal);
-
-		if(normal.z<0.0f){ continue; }
-
-		PTriangle *_t = ((PArray*)stl->proj)->elems[count];
-
-		PVec3fxPMat4f(t->a,mat,&_t->a);
-		PVec3fxPMat4f(t->b,mat,&_t->b);
-		PVec3fxPMat4f(t->c,mat,&_t->c);
-
-		count++;
-	}
-
-	((PArray*)stl->proj)->elems_count = count; //DANGER !!!
-	
-	PArraySort(((PArray*)stl->proj), PStlSorter);
-
-	PArrayPerform(((PArray*)stl->proj), func);
+    res->rows = m.rows;
+    res->cols = m.cols;
+    PFree(res->data);
+    res->data = m.data;
 }

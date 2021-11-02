@@ -14,16 +14,15 @@ Bentornata CGA !!!
 
 <br>
 
-# FILES
+![anim](IMG/anim.jpg)
 
-> [pixie_core.h](DOC/PIXIE_CORE.md)
->
-> Principali funzionalita' di Pixie disegno, suoni, eventi,etc...
->
-> [pixie_base.h](DOC/PIXIE_BASE.md)
->
-> Funzioni matematiche, gestione memoria, strutture dati dinamiche (array,stack,queue), file buffers,etc...
->
-> [pixie_exts.h](DOC/PIXIE_EXTS.md)
->
-> Algebra per vettori, operazioni su matrici, modelli 3D, etc...
+![cube](IMG/cube.jpg)
+
+![font](IMG/font.jpg)
+
+![format](IMG/format.jpg)
+
+![model](IMG/model.jpg)
+
+![particle](IMG/particle.jpg)
+
