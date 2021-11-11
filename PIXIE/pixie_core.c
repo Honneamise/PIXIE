@@ -1115,6 +1115,28 @@ static void PixieOpenglSwapbuffers()
     SwapBuffers(pixie->hdc);
 }
 
+/**********/
+static void PixieOpenglClose()
+{
+    glDeleteTextures(1, &pixie->texture);
+
+    glDisableVertexAttribArray(0);
+
+    glDisableVertexAttribArray(1);
+
+    glDeleteVertexArrays(1, &pixie->vao);
+
+    glDeleteBuffers(1, &pixie->vbo);
+
+	glDetachShader(pixie->prog_shader, pixie->vert_shader);
+	glDeleteShader(pixie->vert_shader);
+
+	glDetachShader(pixie->prog_shader, pixie->frag_shader);
+	glDeleteShader(pixie->frag_shader);
+
+	glDeleteProgram(pixie->prog_shader);
+}
+
 /****************/
 /* OPENAL UTILS */
 /****************/
@@ -1140,7 +1162,7 @@ static void PixieOpenalCheckError()
 
 	if(err!=0)
     {
-        PixieError("[%s]: shader link failed : %s", __func__, PixieOpenalError(err));
+        PixieError("[%s]: openal error : %s", __func__, PixieOpenalError(err));
     }
 }
 
@@ -1203,13 +1225,9 @@ static void PixieOpenalInit()
 /**********/
 static void PixieOpenalClose()
 {
-    int32_t status = 0;
+    alSourceStop(pixie->asrc_snd); 
 
-    alGetSourcei(pixie->asrc_snd, AL_SOURCE_STATE, &status);
-    if(status!=AL_STOPPED) { alSourceStop(pixie->asrc_snd); }
-    
-    alGetSourcei(pixie->asrc_tone, AL_SOURCE_STATE, &status);
-    if(status!=AL_STOPPED) { alSourceStop(pixie->asrc_tone); }
+    alSourceStop(pixie->asrc_tone);
 
     alDeleteBuffers(1, &pixie->asnd);
 
@@ -1386,6 +1404,18 @@ static void PixieWndShowInitialWindow()
     }
 }
 
+/**********/
+static void PixieWndClose()
+{
+    wglMakeCurrent(NULL, NULL);
+    
+    wglDeleteContext(pixie->hglrc);
+
+    DeleteDC(pixie->hdc);
+
+    DestroyWindow(pixie->hwnd);
+}
+
 /********/
 /* CORE */
 /********/
@@ -1457,6 +1487,8 @@ void PixieInit(int32_t w, int32_t h, int32_t screen)
     QueryPerformanceCounter(&pixie->timer);
 
     PixieWndShowInitialWindow();
+
+    srand((uint32_t)time(NULL));
 }
 
 /**********/
@@ -1464,39 +1496,16 @@ void PixieClose()
 {
     assert(pixie!=NULL);
 
-    glDeleteTextures(1, &pixie->texture);
-
-    glDisableVertexAttribArray(0);
-
-    glDisableVertexAttribArray(1);
-
-    glDeleteVertexArrays(1, &pixie->vao);
-
-    glDeleteBuffers(1, &pixie->vbo);
-
-	glDetachShader(pixie->prog_shader, pixie->vert_shader);
-	glDeleteShader(pixie->vert_shader);
-
-	glDetachShader(pixie->prog_shader, pixie->frag_shader);
-	glDeleteShader(pixie->frag_shader);
-
-	glDeleteProgram(pixie->prog_shader);
-
-    wglMakeCurrent(NULL, NULL);
-    
-    wglDeleteContext(pixie->hglrc);
-
-    DeleteDC(pixie->hdc);
-
-    DestroyWindow(pixie->hwnd);
-
     PixieOpenalClose();
+
+    PixieOpenglClose();
+
+    PixieWndClose();    
 
     PFree(pixie->buffer);
 
     PFree(pixie);
     
-    srand((uint32_t)time(NULL));
 }
 
 /**********/
@@ -2477,6 +2486,9 @@ void PixieAudioPlaySound(uint8_t *buffer, int32_t size, int32_t format, int32_t 
 
     if(status==AL_PLAYING) { return; }
 
+    alSourceStop(pixie->asrc_snd); 
+    alSourcei(pixie->asrc_snd, AL_BUFFER, 0);
+
     alDeleteBuffers(1, &pixie->asnd);
     PixieOpenalCheckError();
 
@@ -2508,6 +2520,9 @@ void PixieAudioLoopSound(uint8_t *buffer, int32_t size, int32_t format, int32_t 
     PixieOpenalCheckError();
 
     if(status==AL_PLAYING) { return; }
+
+    alSourceStop(pixie->asrc_snd); 
+    alSourcei(pixie->asrc_snd, AL_BUFFER, 0);
 
     alDeleteBuffers(1, &pixie->asnd);
     PixieOpenalCheckError();
@@ -2640,6 +2655,16 @@ float PixieTimeGetDelta()
 /**********/
 /* EVENTS */
 /**********/
+void PixieEventClearQueue()
+{
+    while(PixieEventAvailable()) {};
+
+    LPARAM val = MAKELPARAM(pixie->mousex, pixie->mousey);
+
+    PostMessage(pixie->hwnd,WM_MOUSEMOVE,0,val);
+}
+
+/*********/
 int32_t PixieEventAvailable()
 {
     assert(pixie!=NULL);

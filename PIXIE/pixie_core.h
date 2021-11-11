@@ -124,6 +124,8 @@ float PixieTimeGetDelta();
 /**********/
 /* EVENTS */
 /**********/
+void PixieEventClearQueue();
+
 int32_t PixieEventAvailable();
 
 int32_t PixieEventGetType();

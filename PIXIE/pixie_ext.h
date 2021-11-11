@@ -57,6 +57,7 @@ typedef struct PMatf
 
 PMatf PMatfInit(int32_t rows, int32_t cols, float *data);
 void PMatfClose(PMatf *mat);
+void PMatfPrint(PMatf mat);//testing pourpose only
 
 void PMatfSet(PMatf mat, int32_t row, int32_t col, float val);
 float PMatfGet(PMatf mat, int32_t row, int32_t col);
@@ -70,6 +71,8 @@ void PMatfSubScalar(PMatf mat, float num);
 void PMatfMulScalar(PMatf mat, float num);
 void PMatfDivScalar(PMatf mat, float num);
 
-void PMatTranspose(PMatf mat, PMatf *res);
+void PMatfTranspose(PMatf mat, PMatf *res);
+void PMatfFlipH(PMatf mat, PMatf *res);
+void PMatfFlipV(PMatf mat, PMatf *res);
 
 #endif

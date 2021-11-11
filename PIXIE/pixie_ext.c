@@ -3,6 +3,7 @@
 /***********/
 //std
 #include "stdlib.h"
+#include "stdio.h"
 #include "stdint.h"
 #include "assert.h"
 
@@ -11,7 +12,7 @@
 
 //pixie
 #include "pixie_base.h"
-#include "pixie_exts.h"
+#include "pixie_ext.h"
 
 /**********/
 /* PVEC2F */
@@ -174,6 +175,23 @@ void PMatfClose(PMatf *mat)
 }
 
 /**********/
+void PMatfPrint(PMatf mat)
+{
+    assert(mat.rows>0 && mat.cols>0 && mat.data!=NULL);
+
+    printf("[rows=%d,cols=%d]\n",mat.rows,mat.cols);
+
+    for(int32_t count=0;count<mat.rows*mat.cols;count++)
+    {
+        if(count>0 && count%mat.cols==0){ printf("\n"); }
+        printf("%.2f",mat.data[count]);
+        printf("\t");
+    }
+
+    printf("\n");
+}
+
+/**********/
 void PMatfSet(PMatf mat, int32_t row, int32_t col, float val)
 {
     assert(mat.data!=NULL && row<mat.rows && col<mat.cols);
@@ -196,7 +214,7 @@ float PMatfGet(PMatf mat, int32_t row, int32_t col)
 /**********/
 void PMatfAdd(PMatf a, PMatf b, PMatf *c)
 {
-    assert(a.rows==b.rows && a.cols==b.cols && a.data!=NULL && b.data!=NULL);
+    assert(a.rows==b.rows && a.cols==b.cols && a.data!=NULL && b.data!=NULL && c!=NULL);
 
     PMatf mat = PMatfInit(a.rows,a.cols,NULL);
     
@@ -212,9 +230,9 @@ void PMatfAdd(PMatf a, PMatf b, PMatf *c)
 }
 
 /**********/
-void QMatSub(PMatf a, PMatf b, PMatf *c)
+void PMatfSub(PMatf a, PMatf b, PMatf *c)
 {
-    assert(a.rows==b.rows && a.cols==b.cols && a.data!=NULL && b.data!=NULL);
+    assert(a.rows==b.rows && a.cols==b.cols && a.data!=NULL && b.data!=NULL && c!=NULL);
 
     PMatf mat = PMatfInit(a.rows,a.cols,NULL);
     
@@ -232,7 +250,7 @@ void QMatSub(PMatf a, PMatf b, PMatf *c)
 /**********/
 void PMatfMul(PMatf a, PMatf b, PMatf *c)
 {
-    assert(a.data!=NULL && b.data!=NULL && a.cols==b.rows);
+    assert(a.data!=NULL && b.data!=NULL && a.cols==b.rows && c!=NULL);
     
     PMatf mat = PMatfInit(a.rows,b.cols,NULL);
 
@@ -307,8 +325,10 @@ void PMatfDivScalar(PMatf mat, float num)
 }
 
 /**********/
-void PMatTranspose(PMatf mat, PMatf *res)
+void PMatfTranspose(PMatf mat, PMatf *res)
 {
+    assert(res!=NULL);
+    
     PMatf m = PMatfInit(mat.cols,mat.rows,NULL);
 
     int32_t count = 0;
@@ -319,6 +339,49 @@ void PMatTranspose(PMatf mat, PMatf *res)
 		{
 			m.data[count] = mat.data[j*mat.cols + i];
 			count++;
+		}
+	}
+
+    res->rows = m.rows;
+    res->cols = m.cols;
+    PFree(res->data);
+    res->data = m.data;
+}
+
+/**********/
+void PMatfFlipH(PMatf mat, PMatf *res)
+{
+    assert(res!=NULL);
+
+    PMatf m = PMatfInit(mat.cols,mat.rows,NULL);
+
+    for (int32_t i=0;i<mat.cols; i++) 
+	{
+		for(int j=mat.cols-1,k=0;j>=0;j--,k++)
+		{
+			m.data[i*m.cols+k] = mat.data[i*m.cols+j];
+		}
+	}
+
+    res->rows = m.rows;
+    res->cols = m.cols;
+    PFree(res->data);
+    res->data = m.data;
+
+}
+
+/**********/
+void PMatfFlipV(PMatf mat, PMatf *res)
+{
+    assert(res!=NULL);
+
+    PMatf m = PMatfInit(mat.cols,mat.rows,NULL);
+
+    for (int32_t i=0,k=mat.rows-1;i<mat.rows;i++,k--) 
+	{
+		for(int j=0;j<mat.cols;j++)
+		{
+			m.data[k*m.cols+j] = mat.data[i*m.cols+j];
 		}
 	}
 
